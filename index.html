@@ -249,43 +249,61 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
 <div class="page active" id="page-exec">
 
   <div class="section-label">Performance Snapshot <span style="font-weight: 500; text-transform: none; letter-spacing: 0; font-size: 12px; background: rgba(37,99,235,0.08); padding: 2px 10px; border-radius: 6px; color: var(--accent);" id="period-range-label"></span> <span style="font-weight: 500; text-transform: none; letter-spacing: 0; font-size: 12px; background: rgba(99,102,241,0.08); padding: 2px 10px; border-radius: 6px; color: var(--ytd);" id="ytd-range-label"></span></div>
-  <!-- ═══════ STORAGE REMEDIATED OVER TIME ═══════ -->
-  <div class="card" style="margin-bottom: 16px; padding: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-      <div>
-        <div style="font-size: 14px; font-weight: 700; color: var(--text);">Storage Remediated</div>
-        <div style="font-size: 11px; color: var(--text-muted);">Monthly (Nov '25 → Now) · Bars = monthly, Line = cumulative</div>
+  <!-- ═══════ ROW 1: Charts side by side ═══════ -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+    <!-- LEFT: Storage Remediated -->
+    <div class="card" style="padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: var(--text);">Storage Remediated</div>
+          <div style="font-size: 10px; color: var(--text-muted);">Monthly bars + cumulative line (Nov '25 → Now)</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">This Period</div>
+          <div style="font-size: 20px; font-weight: 700; color: var(--accent);" id="hero-storage">—</div>
+          <div style="font-size: 9px; color: var(--ytd);" id="hero-storage-ytd-label"></div>
+        </div>
       </div>
-      <div style="text-align: right;">
-        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">This Period</div>
-        <div style="font-size: 22px; font-weight: 700; color: var(--accent);" id="hero-storage">—</div>
-        <div style="font-size: 10px; color: var(--ytd);" id="hero-storage-ytd-label"></div>
-      </div>
+      <div class="chart-container" style="height: 340px;"><canvas id="chart-hero-trend"></canvas></div>
     </div>
-    <div class="chart-container" style="height: 200px;"><canvas id="chart-hero-trend"></canvas></div>
+
+    <!-- RIGHT: FP Rate -->
+    <div class="card" style="padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: var(--text);">False Positive Rate</div>
+          <div style="font-size: 10px; color: var(--text-muted);">Biweekly · FP ÷ (remediated + FP) × 100</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">This Period</div>
+          <div style="font-size: 20px; font-weight: 700; color: var(--accent);" id="hero-fp">—</div>
+          <div style="font-size: 9px; color: var(--text-muted);" id="hero-fp-sub"></div>
+        </div>
+      </div>
+      <div class="chart-container" style="height: 340px;"><canvas id="chart-fp-hero"></canvas></div>
+    </div>
   </div>
 
-  <!-- ═══════ FP RATE OVER TIME ═══════ -->
-  <div class="card" style="margin-bottom: 16px; padding: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-      <div>
-        <div style="font-size: 14px; font-weight: 700; color: var(--text);">False Positive Rate</div>
-        <div style="font-size: 11px; color: var(--text-muted);">Biweekly trend · FP tenants ÷ (remediated + FP) × 100</div>
+  <!-- ═══════ ROW 2: Pipeline (70%) + Reliability/Investigations (30%) ═══════ -->
+  <div style="display: grid; grid-template-columns: 7fr 3fr; gap: 16px; margin-bottom: 16px;">
+    <!-- LEFT: Pipeline Snapshot -->
+    <div>
+      <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px;">Pipeline Snapshot <span style="font-size: 10px; font-weight: 400; color: var(--text-muted);">— Nov '25+</span></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;" id="pipeline-ro-block"></div>
+      <div id="pipeline-fp-row"></div>
+    </div>
+
+    <!-- RIGHT: Reliability + Active Investigations -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div class="card" style="padding: 14px; flex: 1;" id="exec-reliability-card">
+        <div style="font-size: 11px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 8px;">✅ Pipeline Reliability</div>
+        <div id="exec-reliability-content"><span style="font-size:11px;color:var(--text-muted);">Awaiting B3 data</span></div>
       </div>
-      <div style="text-align: right;">
-        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">This Period</div>
-        <div style="font-size: 22px; font-weight: 700; color: var(--accent);" id="hero-fp">—</div>
-        <div style="font-size: 10px; color: var(--text-muted);" id="hero-fp-sub"></div>
+      <div class="card" style="padding: 14px; flex: 1;" id="exec-investigations-card">
+        <div style="font-size: 11px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 8px;">🔍 Active Investigations</div>
+        <div id="exec-investigations-content"><span style="font-size:11px;color:var(--text-muted);">Awaiting INV data</span></div>
       </div>
     </div>
-    <div class="chart-container" style="height: 180px;"><canvas id="chart-fp-hero"></canvas></div>
-  </div>
-
-  <!-- ═══════ PIPELINE SNAPSHOT ═══════ -->
-  <div style="margin-bottom: 16px;">
-    <div style="font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 8px;">Pipeline Snapshot <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">— where is storage right now? (Nov '25+)</span></div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;" id="pipeline-ro-block"></div>
-    <div id="pipeline-fp-row"></div>
   </div>
 
   <div id="stat-pills-container" class="stat-pills"></div>
@@ -294,6 +312,7 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
     ⚠️ <strong>Data may be stale</strong> — last updated <span id="stale-date"></span>. Consider re-running queries.
   </div>
 
+  <!-- ═══════ ROW 3: Insights & Signals ═══════ -->
   <div class="section-label">Insights & Signals</div>
   <div id="alerts-container" class="insight-grid">
     <div class="empty-state">
@@ -1214,14 +1233,14 @@ function renderHeroKPIs() {
     });
   }
 
-  // Storage hero number (current period from G4)
+  // Storage hero number
   const remG4 = getRemediated(DATA.G4);
   const remG5 = getRemediated(DATA.G5);
   document.getElementById('hero-storage').textContent = fmtStorage(remG4.storage_tb);
   const ytdEl = document.getElementById('hero-storage-ytd-label');
   if (ytdEl) ytdEl.textContent = "Nov'25+: " + fmtStorage(remG5.storage_tb);
 
-  // FP hero number (current period from A4 last entry)
+  // FP hero number
   if (DATA.A4 && DATA.A4.length > 0) {
     const cur = DATA.A4[DATA.A4.length - 1];
     document.getElementById('hero-fp').textContent = fmtPct(cur.fp_rate);
@@ -1230,6 +1249,78 @@ function renderHeroKPIs() {
   }
 
   renderStatusBoxes();
+  renderExecReliability();
+  renderExecInvestigations();
+}
+
+function renderExecReliability() {
+  const el = document.getElementById('exec-reliability-content');
+  if (!el) return;
+  if (!DATA.B3) return;
+
+  const totalSucc = DATA.B3.reduce((s, d) => s + d.succeeded, 0);
+  const totalAll  = DATA.B3.reduce((s, d) => s + d.total, 0);
+  const rate = totalAll > 0 ? (totalSucc / totalAll * 100).toFixed(1) : 0;
+  const rateColor = rate > 95 ? 'var(--green)' : rate > 90 ? 'var(--amber)' : 'var(--red)';
+
+  let h = '';
+  // Nov'25+ overall rate
+  h += '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;">';
+  h += '<span style="font-size:24px;font-weight:800;color:' + rateColor + ';">' + rate + '%</span>';
+  h += '<span style="font-size:9px;color:var(--text-muted);">Nov\'25\u2192Now</span>';
+  h += '</div>';
+
+  // This period rate
+  if (DATA.B3_period) {
+    const pSucc = DATA.B3_period.reduce((s, d) => s + d.succeeded, 0);
+    const pAll  = DATA.B3_period.reduce((s, d) => s + d.total, 0);
+    const pRate = pAll > 0 ? (pSucc / pAll * 100).toFixed(1) : '\u2014';
+    const pColor = pRate > 95 ? 'var(--green)' : pRate > 90 ? 'var(--amber)' : 'var(--red)';
+    h += '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;">';
+    h += '<span style="font-size:18px;font-weight:700;color:' + pColor + ';">' + pRate + '%</span>';
+    h += '<span style="font-size:9px;color:var(--text-muted);">This Period</span>';
+    h += '</div>';
+  }
+
+  // Per-action breakdown
+  h += '<div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:6px;margin-top:2px;">';
+  DATA.B3.filter(d => d.total > 10).forEach(d => {
+    const c = d.success_rate > 95 ? 'var(--green)' : d.success_rate > 80 ? 'var(--amber)' : 'var(--red)';
+    h += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;">';
+    h += '<span style="color:var(--text-muted);">' + d.action + '</span>';
+    h += '<span style="font-weight:600;color:' + c + ';">' + d.success_rate.toFixed(1) + '%</span>';
+    h += '</div>';
+  });
+  h += '</div>';
+
+  el.innerHTML = h;
+}
+
+function renderExecInvestigations() {
+  const el = document.getElementById('exec-investigations-content');
+  if (!el || !DATA.INV) return;
+
+  const active = DATA.INV.filter(i => i.status !== 'complete');
+  const totalStorage = active.reduce((s, i) => s + (i.storage_used_tb || 0), 0);
+
+  let h = '';
+  h += '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;">';
+  h += '<span style="font-size:24px;font-weight:800;color:var(--purple);">' + active.length + '</span>';
+  h += '<span style="font-size:9px;color:var(--text-muted);">active</span>';
+  h += '</div>';
+  h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">' + fmtStorage(totalStorage) + ' under investigation</div>';
+
+  // Top 3 active by storage
+  h += '<div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:6px;">';
+  active.sort((a, b) => (b.storage_used_tb||0) - (a.storage_used_tb||0)).slice(0, 3).forEach(inv => {
+    h += '<div style="font-size:10px;padding:2px 0;display:flex;justify-content:space-between;">';
+    h += '<span style="color:var(--text);max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + inv.name + '">' + inv.name + '</span>';
+    h += '<span style="color:var(--text-muted);font-weight:600;">' + fmtStorage(inv.storage_used_tb || 0) + '</span>';
+    h += '</div>';
+  });
+  h += '</div>';
+
+  el.innerHTML = h;
 }
 
 function renderStatusBoxes() {
@@ -1237,7 +1328,7 @@ function renderStatusBoxes() {
   const fpRow = document.getElementById('pipeline-fp-row');
   if (!roBlock || !fpRow) return;
   if (!DATA.G5) {
-    roBlock.innerHTML = '<span style="color:var(--text-muted);font-size:12px;grid-column:1/-1;">Run query G5 to populate pipeline</span>';
+    roBlock.innerHTML = '<span style="color:var(--text-muted);font-size:11px;grid-column:1/-1;">Run query G5</span>';
     return;
   }
 
@@ -1253,26 +1344,21 @@ function renderStatusBoxes() {
 
   function box(label, icon, color, pD, yD, compact) {
     const has = yD.count > 0;
-    const pad = compact ? '12px 16px' : '16px 18px';
-    const iconSz = compact ? '14px' : '18px';
-    const labelSz = compact ? '11px' : '12px';
-    const stoSz = compact ? '16px' : '22px';
-    const subSz = compact ? '14px' : '16px';
-    const tenSz = compact ? '13px' : '15px';
-    let h = '<div style="border-radius:12px; border:1px solid ' + color + (has?'40':'18') + '; background:' + color + '08; padding:' + pad + '; display:flex; align-items:center; gap:16px;">';
-    h += '<div style="display:flex;align-items:center;gap:6px;min-width:110px;">';
-    h += '<span style="font-size:' + iconSz + ';">' + icon + '</span>';
-    h += '<span style="font-size:' + labelSz + ';font-weight:700;color:' + color + ';text-transform:uppercase;letter-spacing:0.3px;">' + label + '</span></div>';
-    h += '<div style="flex:1;display:flex;gap:20px;align-items:baseline;">';
-    h += '<div><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;">Storage (Nov\'25+)</div>';
-    h += '<div style="font-size:' + stoSz + ';font-weight:700;color:var(--text);">' + (yD.storage > 0 ? fmtStorage(yD.storage) : '\u2014') + '</div></div>';
+    let h = '<div style="border-radius:10px;border:1px solid ' + color + (has?'40':'18') + ';background:' + color + '08;padding:' + (compact?'10px 12px':'12px 14px') + ';">';
+    h += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">';
+    h += '<span style="font-size:' + (compact?'12px':'14px') + ';">' + icon + '</span>';
+    h += '<span style="font-size:' + (compact?'10px':'11px') + ';font-weight:700;color:' + color + ';text-transform:uppercase;letter-spacing:0.3px;">' + label + '</span></div>';
+    // Storage row
+    h += '<div style="display:flex;gap:12px;align-items:baseline;margin-bottom:4px;">';
+    h += '<div><div style="font-size:8px;color:var(--text-muted);text-transform:uppercase;">Nov\'25+</div>';
+    h += '<div style="font-size:' + (compact?'15px':'18px') + ';font-weight:700;color:var(--text);">' + (yD.storage > 0 ? fmtStorage(yD.storage) : '\u2014') + '</div></div>';
     if (pD.storage > 0) {
-      h += '<div><div style="font-size:9px;color:var(--accent);">This Period</div>';
-      h += '<div style="font-size:' + subSz + ';font-weight:600;color:var(--accent);">' + fmtStorage(pD.storage) + '</div></div>';
+      h += '<div><div style="font-size:8px;color:var(--accent);">Period</div>';
+      h += '<div style="font-size:' + (compact?'13px':'15px') + ';font-weight:600;color:var(--accent);">' + fmtStorage(pD.storage) + '</div></div>';
     }
     h += '</div>';
-    h += '<div style="text-align:right;min-width:80px;"><div style="font-size:9px;color:var(--text-muted);">Tenants</div>';
-    h += '<div style="font-size:' + tenSz + ';font-weight:600;color:var(--text-muted);">' + (yD.count > 0 ? fmt(yD.count) : '\u2014') + '</div></div>';
+    // Tenants
+    h += '<div style="font-size:10px;color:var(--text-muted);">' + (yD.count > 0 ? fmt(yD.count) + ' tenants' : '') + '</div>';
     h += '</div>';
     return h;
   }
@@ -1284,8 +1370,8 @@ function renderStatusBoxes() {
   const fpP = merge(pL, ['False Positive','FP Reported']);
   const fpY = merge(yL, ['False Positive','FP Reported']);
 
-  roBlock.innerHTML = box('Read-Only','📖','#eab308',roP,roY,false) + box('Blocked','🚫','#ef4444',blkP,blkY,false);
-  fpRow.innerHTML = box('False Positive','✅','#ec4899',fpP,fpY,true);
+  roBlock.innerHTML = box('Read-Only','\uD83D\uDCD6','#eab308',roP,roY,false) + box('Blocked','\uD83D\uDEAB','#ef4444',blkP,blkY,false);
+  fpRow.innerHTML = box('False Positive','\u2705','#ec4899',fpP,fpY,true);
 }
 
 function renderAlerts() {
@@ -1478,7 +1564,7 @@ function renderCumulativeChart() {
   // Use C2 monthly remediation data, filtered to Nov'25+
   const novData = DATA.C2.filter(d => d.month >= '2025-11');
   const months = novData.map(d => d.month);
-  const vals = novData.map(d => d.storage_tb);
+  const vals = novData.map(d => d.storage_pb * 1024);
 
   // Align cumulative endpoint with G5 remediated total (authoritative pipeline snapshot).
   // C2 is action-date-scoped; G5 is detection-date-scoped — small difference (~0.7 PB)
@@ -1550,11 +1636,13 @@ function renderHeroTrend() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
+  // Use monthly C2 data, Nov'25+, convert PB to TB
   const novData = DATA.C2.filter(d => d.month >= '2025-11');
   const fmM = m => { const p = m.split('-'); const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return mn[parseInt(p[1])-1] + " '" + p[0].slice(2); };
-  const months = novData.map(d => fmM(d.month));
+  const labels = novData.map(d => fmM(d.month));
   const storageTB = novData.map(d => d.storage_pb * 1024);
 
+  // Align cumulative with G5 snapshot
   const remG5 = getRemediated(DATA.G5);
   if (remG5.storage_tb > 0 && storageTB.length > 0) {
     const c2Sum = storageTB.reduce((s, v) => s + v, 0);
@@ -1564,22 +1652,24 @@ function renderHeroTrend() {
 
   let running = 0;
   const cumulative = storageTB.map(v => { running += v; return running; });
-  const barColors = storageTB.map((_, i) => i === storageTB.length - 1 ? 'rgba(37,99,235,0.85)' : 'rgba(59,130,246,0.45)');
-  const barBorders = storageTB.map((_, i) => i === storageTB.length - 1 ? '#1d4ed8' : '#3b82f6');
+
+  // Highlight current month (last bar)
+  const barBg = storageTB.map((_, i) => i === storageTB.length - 1 ? 'rgba(37,99,235,0.85)' : 'rgba(59,130,246,0.5)');
+  const barBd = storageTB.map((_, i) => i === storageTB.length - 1 ? '#1d4ed8' : '#3b82f6');
 
   chartInstances['hero-trend'] = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: months,
+      labels: labels,
       datasets: [
-        { label: 'Monthly', data: storageTB, backgroundColor: barColors, borderColor: barBorders, borderWidth: 1, borderRadius: 4, yAxisID: 'y', order: 2 },
-        { label: 'Cumulative', data: cumulative, type: 'line', borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.06)', borderWidth: 2, pointRadius: cumulative.map((_, i) => i === cumulative.length - 1 ? 6 : 2), pointBackgroundColor: cumulative.map((_, i) => i === cumulative.length - 1 ? '#16a34a' : '#22c55e'), fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
+        { label: 'Monthly', data: storageTB, backgroundColor: barBg, borderColor: barBd, borderWidth: 1, borderRadius: 4, yAxisID: 'y', order: 2 },
+        { label: 'Cumulative', data: cumulative, type: 'line', borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.06)', borderWidth: 2.5, pointRadius: cumulative.map((_, i) => i === cumulative.length - 1 ? 6 : 3), pointBackgroundColor: cumulative.map((_, i) => i === cumulative.length - 1 ? '#16a34a' : '#22c55e'), fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', padding: 10, boxWidth: 6, font: { size: 10 } } },
+        legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, boxWidth: 6, font: { size: 10 } } },
         tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + fmtStorage(c.parsed.y); } } }
       },
       scales: {
