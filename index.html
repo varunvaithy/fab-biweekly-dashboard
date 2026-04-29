@@ -289,7 +289,7 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
     <!-- LEFT: Pipeline Snapshot -->
     <div>
       <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px;">Pipeline Snapshot <span style="font-size: 10px; font-weight: 400; color: var(--text-muted);">— Nov '25+</span></div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;" id="pipeline-ro-block"></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 8px;" id="pipeline-ro-block"></div>
       <div id="pipeline-fp-row"></div>
     </div>
 
@@ -1384,10 +1384,12 @@ function renderStatusBoxes() {
   const roY = merge(yL, ['ReadOnly In-Progress','ReadOnly Completed']);
   const blkP = merge(pL, ['Block In-Progress','Block Completed']);
   const blkY = merge(yL, ['Block In-Progress','Block Completed']);
+  const delP = merge(pL, ['Delete In-Progress','Delete Completed']);
+  const delY = merge(yL, ['Delete In-Progress','Delete Completed']);
   const fpP = merge(pL, ['False Positive','FP Reported']);
   const fpY = merge(yL, ['False Positive','FP Reported']);
 
-  roBlock.innerHTML = box('Read-Only','\uD83D\uDCD6','#eab308',roP,roY,false) + box('Blocked','\uD83D\uDEAB','#ef4444',blkP,blkY,false);
+  roBlock.innerHTML = box('Read-Only','\uD83D\uDCD6','#eab308',roP,roY,false) + box('Blocked','\uD83D\uDEAB','#ef4444',blkP,blkY,false) + box('Deleted','\uD83D\uDDD1\uFE0F','#8b5cf6',delP,delY,false);
   fpRow.innerHTML = box('False Positive','\u2705','#ec4899',fpP,fpY,true);
 }
 
@@ -1743,7 +1745,6 @@ function renderFPHero() {
   const labels = sorted.map(d => fmBi(d.period_start));
   const fpRates = sorted.map(d => d.fp_rate);
   const fpCounts = sorted.map(d => d.fp);
-  const storageTB = sorted.map(d => d.storage_tb || 0);
 
   const ptRadii = fpRates.map((_, i) => i === fpRates.length - 1 ? 7 : 3);
   const ptColors = fpRates.map((_, i) => i === fpRates.length - 1 ? '#dc2626' : '#f97316');
@@ -1763,8 +1764,7 @@ function renderFPHero() {
         legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', padding: 10, boxWidth: 6, font: { size: 10 } } },
         tooltip: {
           callbacks: {
-            label: function(c) { return c.dataset.label === 'FP Rate (%)' ? 'FP Rate: ' + c.parsed.y.toFixed(2) + '%' : 'FP Count: ' + c.parsed.y; },
-            afterBody: function(items) { const i = items[0].dataIndex; return 'Storage: ' + fmtStorage(storageTB[i]); }
+            label: function(c) { return c.dataset.label === 'FP Rate (%)' ? 'FP Rate: ' + c.parsed.y.toFixed(2) + '%' : 'FP Count: ' + c.parsed.y; }
           }
         }
       },
