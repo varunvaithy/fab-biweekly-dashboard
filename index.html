@@ -285,7 +285,7 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
   </div>
 
   <!-- ═══════ ROW 2: Pipeline + Daily Detection + Reliability/Investigations ═══════ -->
-  <div style="display: grid; grid-template-columns: 4fr 4fr 2fr; gap: 16px; margin-bottom: 16px;">
+  <div style="display: grid; grid-template-columns: 5fr 3fr 2fr; gap: 16px; margin-bottom: 16px;">
     <!-- LEFT: Pipeline Snapshot -->
     <div>
       <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px;">Pipeline Snapshot <span style="font-size: 10px; font-weight: 400; color: var(--text-muted);">— Nov '25+</span></div>
@@ -1798,8 +1798,8 @@ function renderSourceMix() {
   };
 
   const labelWithPct = sources.map(d => {
-    const pct = (d.tenants / total * 100).toFixed(0);
-    return (friendlyName[d.source] || d.source) + '  ' + pct + '%';
+    const pct = (d.tenants / total * 100).toFixed(1);
+    return (friendlyName[d.source] || d.source) + '  ' + fmt(d.tenants) + ' (' + pct + '%)';
   });
 
   // Center text plugin (instance-scoped)
