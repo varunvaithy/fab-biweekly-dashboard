@@ -284,12 +284,19 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
     </div>
   </div>
 
-  <!-- ═══════ ROW 2: Pipeline (70%) + Reliability/Investigations (30%) ═══════ -->
-  <div style="display: grid; grid-template-columns: 7fr 3fr; gap: 16px; margin-bottom: 16px;">
+  <!-- ═══════ ROW 2: Pipeline + Daily Detection + Reliability/Investigations ═══════ -->
+  <div style="display: grid; grid-template-columns: 4fr 4fr 2fr; gap: 16px; margin-bottom: 16px;">
     <!-- LEFT: Pipeline Snapshot -->
     <div>
       <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px;">Pipeline Snapshot <span style="font-size: 10px; font-weight: 400; color: var(--text-muted);">— Nov '25+</span></div>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 8px;" id="pipeline-ro-block"></div>
+    </div>
+
+    <!-- CENTER: Daily Detection by Source -->
+    <div class="card" style="padding: 12px;">
+      <div style="font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 6px;">Daily Detection by Source <span style="font-size: 9px; font-weight: 400; color: var(--text-muted);">Nov '25 → Now</span></div>
+      <div class="chart-container" style="height: 180px;"><canvas id="chart-daily-source"></canvas></div>
+      <div id="daily-source-placeholder" style="text-align: center; padding: 12px; color: var(--text-muted); font-size: 11px; display: none;">Run query G6</div>
     </div>
 
     <!-- RIGHT: Reliability + Active Investigations -->
@@ -318,18 +325,6 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
       <div class="icon">📊</div>
       <div class="msg">No data loaded yet</div>
       <div class="sub">Run the biweekly queries and share results to populate the dashboard</div>
-    </div>
-  </div>
-
-  <div class="grid-2" style="margin-top: 24px;">
-    <div class="card">
-      <div class="card-title">Daily Detection by Source <span class="tag">Nov'25 → Now</span></div>
-      <div class="chart-container h250"><canvas id="chart-daily-source"></canvas></div>
-      <div id="daily-source-placeholder" style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px;">Run query G6 and populate DATA.G6 to enable this chart</div>
-    </div>
-    <div class="card">
-      <div class="card-title">Storage Remediated <span class="tag">Nov'25 → Now · monthly + cumulative</span></div>
-      <div class="chart-container h250"><canvas id="chart-cumulative"></canvas></div>
     </div>
   </div>
 
@@ -2962,7 +2957,7 @@ function renderDailySource() {
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top', labels: { boxWidth: 10, padding: 6, font: { size: 10 } } },
+        legend: { position: 'top', labels: { boxWidth: 8, padding: 4, font: { size: 9 } } },
         title: SMOOTH_OUTLIER && peak > yMax
           ? { display: true, text: '⚠ Y-axis capped — some bars exceed visible range. Daily peak: ' + fmt(peak), font: { size: 10, weight: 'normal' }, color: '#f59e0b', padding: { bottom: 4 } }
           : { display: false }
@@ -3269,7 +3264,6 @@ function init() {
   renderAlerts();
   renderHeroTrend();
   renderFPHero();
-  renderCumulativeChart();
   renderDailySource();
   if (ytd) renderYTDDetection(ytd);
   renderSourceMix();
