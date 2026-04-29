@@ -278,6 +278,7 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
           <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">This Period</div>
           <div style="font-size: 20px; font-weight: 700; color: var(--accent);" id="hero-fp">—</div>
           <div style="font-size: 9px; color: var(--text-muted);" id="hero-fp-sub"></div>
+          <div style="font-size: 9px; color: var(--ytd);" id="hero-fp-ytd-label"></div>
         </div>
       </div>
       <div class="chart-container" style="height: 340px;"><canvas id="chart-fp-hero"></canvas></div>
@@ -1260,6 +1261,19 @@ function renderHeroKPIs() {
     document.getElementById('hero-fp').textContent = fmtPct(cur.fp_rate);
     const fpSub = document.getElementById('hero-fp-sub');
     if (fpSub) fpSub.textContent = fmt(cur.fp) + ' FP of ' + fmt(cur.tenants) + ' tenants';
+    // Cumulative FP rate across Nov'25+ (sum FP / sum decided)
+    const cumFP = fpSorted.reduce((s, d) => s + (d.fp || 0), 0);
+    const cumDecided = fpSorted.reduce((s, d) => {
+      // decided = tenants in statuses 0,3,4,5,6,7,9,10 — approximate via fp_rate back-calculation
+      // fp_rate = fp / decided * 100  ⇒  decided = fp / (fp_rate/100)
+      // But safer: A4 has tenants + fp. Decided ≈ tenants (most are decided by now for older periods)
+      // Best proxy: use fp and fp_rate to derive decided where fp_rate > 0
+      if (d.fp_rate > 0) return s + Math.round(d.fp / (d.fp_rate / 100));
+      return s + d.tenants;
+    }, 0);
+    const cumFPRate = cumDecided > 0 ? (cumFP / cumDecided * 100) : 0;
+    const fpYtdEl = document.getElementById('hero-fp-ytd-label');
+    if (fpYtdEl) fpYtdEl.textContent = "Nov'25+: " + fmtPct(cumFPRate) + ' (' + fmt(cumFP) + ' FP)';
   }
 
   renderStatusBoxes();
@@ -1733,6 +1747,16 @@ function renderFPHero() {
   const fpRates = sorted.map(d => d.fp_rate);
   const fpCounts = sorted.map(d => d.fp);
 
+  // Cumulative FP rate: running sum(fp) / running sum(decided) at each point
+  let runFP = 0, runDecided = 0;
+  const cumFPRates = sorted.map(d => {
+    runFP += d.fp || 0;
+    // Derive decided from fp and fp_rate: decided = fp / (fp_rate/100)
+    const decided = d.fp_rate > 0 ? Math.round(d.fp / (d.fp_rate / 100)) : d.tenants;
+    runDecided += decided;
+    return runDecided > 0 ? (runFP / runDecided * 100) : 0;
+  });
+
   const ptRadii = fpRates.map((_, i) => i === fpRates.length - 1 ? 7 : 3);
   const ptColors = fpRates.map((_, i) => i === fpRates.length - 1 ? '#dc2626' : '#f97316');
 
@@ -1742,6 +1766,7 @@ function renderFPHero() {
       labels: labels,
       datasets: [
         { label: 'FP Rate (%)', data: fpRates, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.06)', borderWidth: 2.5, pointRadius: ptRadii, pointBackgroundColor: fpRates.map((_, i) => i === fpRates.length - 1 ? '#dc2626' : '#2563eb'), pointBorderColor: fpRates.map((_, i) => i === fpRates.length - 1 ? '#dc2626' : '#2563eb'), fill: true, tension: 0.3, yAxisID: 'y' },
+        { label: 'Cumulative FP Rate', data: cumFPRates, borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, borderDash: [6, 3], pointRadius: cumFPRates.map((_, i) => i === cumFPRates.length - 1 ? 5 : 0), pointBackgroundColor: '#f59e0b', fill: false, tension: 0.3, yAxisID: 'y' },
         { label: 'FP Count', data: fpCounts, type: 'bar', backgroundColor: 'rgba(148,163,184,0.35)', borderColor: '#94a3b8', borderWidth: 1, borderRadius: 3, yAxisID: 'y1', order: 2 }
       ]
     },
@@ -1751,7 +1776,11 @@ function renderFPHero() {
         legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', padding: 10, boxWidth: 6, font: { size: 10 } } },
         tooltip: {
           callbacks: {
-            label: function(c) { return c.dataset.label === 'FP Rate (%)' ? 'FP Rate: ' + c.parsed.y.toFixed(2) + '%' : 'FP Count: ' + c.parsed.y; }
+            label: function(c) {
+              if (c.dataset.label === 'FP Rate (%)') return 'Period FP: ' + c.parsed.y.toFixed(2) + '%';
+              if (c.dataset.label === 'Cumulative FP Rate') return "Nov'25+ FP: " + c.parsed.y.toFixed(2) + '%';
+              return 'FP Count: ' + c.parsed.y;
+            }
           }
         }
       },
