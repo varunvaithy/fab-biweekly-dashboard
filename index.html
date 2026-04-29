@@ -1249,16 +1249,25 @@ function renderHeroKPIs() {
     });
   }
 
-  // Storage hero number
-  const remG4 = getRemediated(DATA.G4);
-  const remG5 = getRemediated(DATA.G5);
-  document.getElementById('hero-storage').textContent = fmtStorage(remG4.storage_tb);
-  const ytdEl = document.getElementById('hero-storage-ytd-label');
-  if (ytdEl) ytdEl.textContent = "Nov'25+: " + fmtStorage(remG5.storage_tb);
+  // Storage hero number — use C2b (same source as chart) for consistency
+  if (DATA.C2b && DATA.C2b.length > 0) {
+    const curPeriod = DATA.C2b.reduce((best, d) => d.period_num < best.period_num ? d : best);
+    document.getElementById('hero-storage').textContent = fmtStorage(curPeriod.storage_tb || 0);
+    const totalStorage = DATA.C2b.reduce((s, d) => s + (d.storage_tb || 0), 0);
+    const ytdEl = document.getElementById('hero-storage-ytd-label');
+    if (ytdEl) ytdEl.textContent = "Nov'25+: " + fmtStorage(totalStorage);
+  } else {
+    const remG4 = getRemediated(DATA.G4);
+    const remG5 = getRemediated(DATA.G5);
+    document.getElementById('hero-storage').textContent = fmtStorage(remG4.storage_tb);
+    const ytdEl = document.getElementById('hero-storage-ytd-label');
+    if (ytdEl) ytdEl.textContent = "Nov'25+: " + fmtStorage(remG5.storage_tb);
+  }
 
-  // FP hero number
+  // FP hero number — use latest period from A4 (same data as FP chart)
   if (DATA.A4 && DATA.A4.length > 0) {
-    const cur = DATA.A4[DATA.A4.length - 1];
+    const fpSorted = [...DATA.A4].filter(d => d.period_start >= '2025-10-31').sort((a, b) => a.period_start.localeCompare(b.period_start));
+    const cur = fpSorted[fpSorted.length - 1];
     document.getElementById('hero-fp').textContent = fmtPct(cur.fp_rate);
     const fpSub = document.getElementById('hero-fp-sub');
     if (fpSub) fpSub.textContent = fmt(cur.fp) + ' FP of ' + fmt(cur.tenants) + ' tenants';
@@ -1734,7 +1743,7 @@ function renderFPHero() {
   const labels = sorted.map(d => fmBi(d.period_start));
   const fpRates = sorted.map(d => d.fp_rate);
   const fpCounts = sorted.map(d => d.fp);
-  const storagePB = sorted.map(d => d.storage_pb);
+  const storageTB = sorted.map(d => d.storage_tb || 0);
 
   const ptRadii = fpRates.map((_, i) => i === fpRates.length - 1 ? 7 : 3);
   const ptColors = fpRates.map((_, i) => i === fpRates.length - 1 ? '#dc2626' : '#f97316');
@@ -1755,7 +1764,7 @@ function renderFPHero() {
         tooltip: {
           callbacks: {
             label: function(c) { return c.dataset.label === 'FP Rate (%)' ? 'FP Rate: ' + c.parsed.y.toFixed(2) + '%' : 'FP Count: ' + c.parsed.y; },
-            afterBody: function(items) { const i = items[0].dataIndex; return 'Storage: ' + storagePB[i].toFixed(2) + ' PB'; }
+            afterBody: function(items) { const i = items[0].dataIndex; return 'Storage: ' + fmtStorage(storageTB[i]); }
           }
         }
       },
