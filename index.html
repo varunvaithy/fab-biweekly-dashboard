@@ -1291,6 +1291,10 @@ function renderExecReliability() {
   const rate = totalAll > 0 ? (totalSucc / totalAll * 100).toFixed(1) : 0;
   const rateColor = rate > 95 ? 'var(--green)' : rate > 90 ? 'var(--amber)' : 'var(--red)';
 
+  // Build period lookup
+  const pMap = {};
+  if (DATA.B3_period) DATA.B3_period.forEach(d => { pMap[d.action] = d; });
+
   let h = '';
   // Nov'25+ overall rate + this period side by side
   h += '<div style="display:flex;gap:14px;align-items:baseline;margin-bottom:4px;">';
@@ -1305,13 +1309,38 @@ function renderExecReliability() {
     h += '<div style="font-size:8px;color:var(--text-muted);">Period</div></div>';
   }
   h += '</div>';
-  // Key actions only — single line each
+
+  // Per-action breakdown with mini progress bars: Nov'25+ vs Period
+  const rateCol = v => v > 95 ? 'var(--green)' : v > 80 ? 'var(--amber)' : 'var(--red)';
+  const barBg = v => v > 95 ? 'rgba(34,197,94,0.15)' : v > 80 ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)';
+  const barFg = v => v > 95 ? 'rgba(34,197,94,0.5)' : v > 80 ? 'rgba(245,158,11,0.5)' : 'rgba(239,68,68,0.5)';
+
+  // Header row
   h += '<div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:3px;">';
-  DATA.B3.filter(d => d.total > 100).slice(0, 3).forEach(d => {
-    const c = d.success_rate > 95 ? 'var(--green)' : d.success_rate > 80 ? 'var(--amber)' : 'var(--red)';
-    h += '<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;">';
-    h += '<span style="color:var(--text-muted);">' + d.action + '</span>';
-    h += '<span style="font-weight:600;color:' + c + ';">' + d.success_rate.toFixed(1) + '%</span></div>';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:7px;color:var(--text-muted);padding:0 0 2px 0;text-transform:uppercase;letter-spacing:0.3px;">';
+  h += '<span>Action</span><span style="text-align:right;">Nov\'25+</span><span style="text-align:right;">Period</span></div>';
+
+  DATA.B3.filter(d => d.total > 100).slice(0, 4).forEach(d => {
+    const pData = pMap[d.action];
+    const pRate = pData ? pData.success_rate : null;
+    const ytdR = d.success_rate;
+
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:9px;padding:2px 0;align-items:center;gap:4px;">';
+    // Action name
+    h += '<span style="color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + d.action + ' \u2014 Nov\'25+: ' + fmt(d.succeeded) + '/' + fmt(d.total) + (pData ? ' | Period: ' + fmt(pData.succeeded) + '/' + fmt(pData.total) : '') + '">' + d.action + '</span>';
+    // Nov'25+ bar
+    h += '<div style="position:relative;height:14px;background:' + barBg(ytdR) + ';border-radius:3px;overflow:hidden;">';
+    h += '<div style="position:absolute;left:0;top:0;height:100%;width:' + Math.min(ytdR, 100) + '%;background:' + barFg(ytdR) + ';border-radius:3px;"></div>';
+    h += '<span style="position:absolute;right:3px;top:50%;transform:translateY(-50%);font-size:8px;font-weight:700;color:' + rateCol(ytdR) + ';">' + ytdR.toFixed(1) + '%</span></div>';
+    // Period bar
+    if (pRate !== null) {
+      h += '<div style="position:relative;height:14px;background:' + barBg(pRate) + ';border-radius:3px;overflow:hidden;">';
+      h += '<div style="position:absolute;left:0;top:0;height:100%;width:' + Math.min(pRate, 100) + '%;background:' + barFg(pRate) + ';border-radius:3px;"></div>';
+      h += '<span style="position:absolute;right:3px;top:50%;transform:translateY(-50%);font-size:8px;font-weight:700;color:' + rateCol(pRate) + ';">' + pRate.toFixed(1) + '%</span></div>';
+    } else {
+      h += '<div style="height:14px;display:flex;align-items:center;justify-content:flex-end;font-size:8px;color:var(--text-muted);">\u2014</div>';
+    }
+    h += '</div>';
   });
   h += '</div>';
 
