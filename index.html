@@ -1651,7 +1651,8 @@ function renderHeroTrend() {
     const sorted = [...DATA.C2b].sort((a, b) => b.period_num - a.period_num);
     const fmBi = d => { const p = d.split('-'); const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return mn[parseInt(p[1])-1] + ' ' + parseInt(p[2]); };
     const labels = sorted.map(d => fmBi(d.period_start));
-    const storageTB = sorted.map(d => d.storage_pb * 1024);
+    // fixStorageUnits() already converted storage_pb → storage_tb
+    const storageTB = sorted.map(d => d.storage_tb || 0);
     let running = 0;
     const cumulative = storageTB.map(v => { running += v; return running; });
     const barBg = storageTB.map((_, i) => i === storageTB.length - 1 ? 'rgba(37,99,235,0.85)' : 'rgba(59,130,246,0.5)');
@@ -1680,11 +1681,11 @@ function renderHeroTrend() {
       }
     });
   } else {
-    // Fallback: monthly C2 data, Nov'25+, convert PB to TB
+    // Fallback: monthly C2 data, Nov'25+, already converted to TB by fixStorageUnits
     const novData = DATA.C2.filter(d => d.month >= '2025-11');
     const fmM = m => { const p = m.split('-'); const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return mn[parseInt(p[1])-1] + " '" + p[0].slice(2); };
     const labels = novData.map(d => fmM(d.month));
-    const storageTB = novData.map(d => d.storage_pb * 1024);
+    const storageTB = novData.map(d => d.storage_tb || 0);
     const remG5 = getRemediated(DATA.G5);
     if (remG5.storage_tb > 0 && storageTB.length > 0) {
       const c2Sum = storageTB.reduce((s, v) => s + v, 0);
