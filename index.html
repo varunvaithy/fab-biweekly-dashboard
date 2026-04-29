@@ -290,7 +290,6 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
     <div>
       <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px;">Pipeline Snapshot <span style="font-size: 10px; font-weight: 400; color: var(--text-muted);">— Nov '25+</span></div>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 8px;" id="pipeline-ro-block"></div>
-      <div id="pipeline-fp-row"></div>
     </div>
 
     <!-- RIGHT: Reliability + Active Investigations -->
@@ -1342,8 +1341,7 @@ function renderExecInvestigations() {
 
 function renderStatusBoxes() {
   const roBlock = document.getElementById('pipeline-ro-block');
-  const fpRow = document.getElementById('pipeline-fp-row');
-  if (!roBlock || !fpRow) return;
+  if (!roBlock) return;
   if (!DATA.G5) {
     roBlock.innerHTML = '<span style="color:var(--text-muted);font-size:11px;grid-column:1/-1;">Run query G5</span>';
     return;
@@ -1389,8 +1387,7 @@ function renderStatusBoxes() {
   const fpP = merge(pL, ['False Positive','FP Reported']);
   const fpY = merge(yL, ['False Positive','FP Reported']);
 
-  roBlock.innerHTML = box('Read-Only','\uD83D\uDCD6','#eab308',roP,roY,false) + box('Blocked','\uD83D\uDEAB','#ef4444',blkP,blkY,false) + box('Deleted','\uD83D\uDDD1\uFE0F','#8b5cf6',delP,delY,false);
-  fpRow.innerHTML = box('False Positive','\u2705','#ec4899',fpP,fpY,true);
+  roBlock.innerHTML = box('Read-Only','\uD83D\uDCD6','#eab308',roP,roY,false) + box('Blocked','\uD83D\uDEAB','#ef4444',blkP,blkY,false) + box('Deleted','\uD83D\uDDD1\uFE0F','#8b5cf6',delP,delY,false) + '<div></div>' + box('False Positive','\u2705','#ec4899',fpP,fpY,false) + '<div></div>';
 }
 
 function renderAlerts() {
