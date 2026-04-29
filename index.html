@@ -1765,9 +1765,9 @@ function renderFPHero() {
     data: {
       labels: labels,
       datasets: [
-        { label: 'FP Rate (%)', data: fpRates, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.06)', borderWidth: 2.5, pointRadius: ptRadii, pointBackgroundColor: fpRates.map((_, i) => i === fpRates.length - 1 ? '#dc2626' : '#2563eb'), pointBorderColor: fpRates.map((_, i) => i === fpRates.length - 1 ? '#dc2626' : '#2563eb'), fill: true, tension: 0.3, yAxisID: 'y' },
-        { label: 'Cumulative FP Rate', data: cumFPRates, borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, borderDash: [6, 3], pointRadius: cumFPRates.map((_, i) => i === cumFPRates.length - 1 ? 5 : 0), pointBackgroundColor: '#f59e0b', fill: false, tension: 0.3, yAxisID: 'y' },
-        { label: 'FP Count', data: fpCounts, type: 'bar', backgroundColor: 'rgba(148,163,184,0.35)', borderColor: '#94a3b8', borderWidth: 1, borderRadius: 3, yAxisID: 'y1', order: 2 }
+        { label: 'Period FP Rate', data: fpRates, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.06)', borderWidth: 2.5, pointRadius: ptRadii, pointBackgroundColor: fpRates.map((_, i) => i === fpRates.length - 1 ? '#dc2626' : '#2563eb'), pointBorderColor: fpRates.map((_, i) => i === fpRates.length - 1 ? '#dc2626' : '#2563eb'), fill: true, tension: 0.3, yAxisID: 'y' },
+        { label: "Cumulative FP Rate", data: cumFPRates, borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, borderDash: [6, 3], pointRadius: cumFPRates.map((_, i) => i === cumFPRates.length - 1 ? 5 : 0), pointBackgroundColor: '#f59e0b', fill: false, tension: 0.3, yAxisID: 'y' },
+        { label: 'FP Count', data: fpCounts, borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: fpCounts.map((_, i) => i === fpCounts.length - 1 ? 4 : 2), pointBackgroundColor: '#94a3b8', fill: false, tension: 0.3, yAxisID: 'y1' }
       ]
     },
     options: {
@@ -1777,9 +1777,9 @@ function renderFPHero() {
         tooltip: {
           callbacks: {
             label: function(c) {
-              if (c.dataset.label === 'FP Rate (%)') return 'Period FP: ' + c.parsed.y.toFixed(2) + '%';
+              if (c.dataset.label === 'Period FP Rate') return 'Period FP: ' + c.parsed.y.toFixed(2) + '%';
               if (c.dataset.label === 'Cumulative FP Rate') return "Nov'25+ FP: " + c.parsed.y.toFixed(2) + '%';
-              return 'FP Count: ' + c.parsed.y;
+              return 'FP Count: ' + fmt(c.parsed.y);
             }
           }
         }
