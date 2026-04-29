@@ -292,11 +292,10 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 8px;" id="pipeline-ro-block"></div>
     </div>
 
-    <!-- CENTER: Daily Detection by Source -->
+    <!-- CENTER: Remediation Source Mix -->
     <div class="card" style="padding: 12px;">
-      <div style="font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 6px;">Daily Detection by Source <span style="font-size: 9px; font-weight: 400; color: var(--text-muted);">Nov '25 → Now</span></div>
-      <div class="chart-container" style="height: 180px;"><canvas id="chart-daily-source"></canvas></div>
-      <div id="daily-source-placeholder" style="text-align: center; padding: 12px; color: var(--text-muted); font-size: 11px; display: none;">Run query G6</div>
+      <div style="font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 6px;">Who's Finding the Fraud? <span style="font-size: 9px; font-weight: 400; color: var(--text-muted);">Remediated · Nov '25 → Now</span></div>
+      <div class="chart-container" style="height: 180px; position: relative;"><canvas id="chart-source-mix"></canvas></div>
     </div>
 
     <!-- RIGHT: Reliability + Active Investigations -->
@@ -352,7 +351,7 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
     </label>
   </div>
   <div style="display: flex; gap: 16px; margin-bottom: 24px; align-items: stretch;">
-    <div class="card" style="flex: 3; min-width: 0; margin-bottom: 0;">
+    <div class="card" style="flex: 1; min-width: 0; margin-bottom: 0;">
       <table style="font-size: 12px;">
         <thead>
           <tr>
@@ -369,10 +368,6 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
           <tr><td colspan="7" class="empty-state" style="padding: 20px;">Awaiting A3 + A3c data</td></tr>
         </tbody>
       </table>
-    </div>
-    <div class="card" style="flex: 2; min-width: 0; margin-bottom: 0; display: flex; flex-direction: column;">
-      <div class="card-title">Remediation Source Mix <span class="tag">Nov'25 → Now</span></div>
-      <div class="chart-container" style="flex: 1; min-height: 220px;"><canvas id="chart-source-mix"></canvas></div>
     </div>
   </div>
 
@@ -1776,7 +1771,6 @@ function renderSourceMix() {
   if (DATA.G7) {
     sources = DATA.G7.filter(d => d.tenants > 0).map(d => ({ source: d.source, tenants: d.tenants, storage_tb: d.storage_tb || 0 }));
   } else if (DATA.G6) {
-    // No G7 yet -- use G6 detection proportions (includes non-remediated)
     const ytdRows = DATA.G6.filter(d => d.detection_date >= '2025-10-31');
     const totals = { 'DS Model': 0, 'Investigation': 0, 'Rules': 0, 'Manual': 0, 'Other': 0 };
     ytdRows.forEach(d => {
@@ -1789,25 +1783,75 @@ function renderSourceMix() {
     sources = Object.entries(totals).filter(([k, v]) => v > 0).map(([k, v]) => ({ source: k, tenants: v, storage_tb: 0 }));
   }
   if (!sources.length) return;
-  const ctx = document.getElementById('chart-source-mix').getContext('2d');
+  const el = document.getElementById('chart-source-mix');
+  if (!el) return;
+  const ctx = el.getContext('2d');
+  const total = sources.reduce((s, d) => s + d.tenants, 0);
+
+  // Friendly labels for the legend
+  const friendlyName = {
+    'Rules': 'Automation Rules',
+    'DS Model': 'DS/ML Model',
+    'Investigation': 'Investigations',
+    'Manual': 'Manual Review',
+    'Other': 'Other Sources'
+  };
+
+  const labelWithPct = sources.map(d => {
+    const pct = (d.tenants / total * 100).toFixed(0);
+    return (friendlyName[d.source] || d.source) + '  ' + pct + '%';
+  });
+
+  // Center text plugin (instance-scoped)
+  const centerTextPlugin = {
+    id: 'sourceMixCenter',
+    afterDraw(chart) {
+      const { ctx: c, chartArea: { left, right, top, bottom } } = chart;
+      const cx = (left + right) / 2, cy = (top + bottom) / 2;
+      c.save();
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = 'bold 18px Inter, system-ui, sans-serif';
+      c.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#e2e8f0';
+      c.fillText(fmt(total), cx, cy - 8);
+      c.font = '10px Inter, system-ui, sans-serif';
+      c.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#94a3b8';
+      c.fillText('tenants', cx, cy + 10);
+      c.restore();
+    }
+  };
+
   new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: sources.map(d => d.source),
+      labels: labelWithPct,
       datasets: [{
         data: sources.map(d => d.tenants),
         backgroundColor: palette.slice(0, sources.length),
-        borderWidth: 0
+        borderWidth: 0,
+        hoverOffset: 6
       }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'right', labels: { boxWidth: 12, padding: 8 } },
-        tooltip: { callbacks: { label: function(ctx) { const s = sources[ctx.dataIndex]; return s.source + ': ' + fmt(s.tenants) + ' tenants · ' + fmtStorage(s.storage_tb); } } }
+        legend: { position: 'right', labels: { boxWidth: 10, padding: 6, font: { size: 10 } } },
+        tooltip: {
+          callbacks: {
+            title: function(items) { return (friendlyName[sources[items[0].dataIndex].source] || sources[items[0].dataIndex].source); },
+            label: function(ctx) {
+              const s = sources[ctx.dataIndex];
+              const pct = (s.tenants / total * 100).toFixed(1);
+              return [
+                fmt(s.tenants) + ' tenants remediated (' + pct + '%)',
+                fmtStorage(s.storage_tb) + ' storage reclaimed'
+              ];
+            }
+          }
+        }
       },
-      cutout: '60%'
-    }
+      cutout: '62%'
+    },
+    plugins: [centerTextPlugin]
   });
 }
 
@@ -2932,8 +2976,10 @@ function computeYTD() {
 
 function renderDailySource() {
   const placeholder = document.getElementById('daily-source-placeholder');
+  const el = document.getElementById('chart-daily-source');
   if (!DATA.G6) { if (placeholder) placeholder.style.display = 'block'; return; }
   if (placeholder) placeholder.style.display = 'none';
+  if (!el) return;
 
   destroyChart('daily-source');
   const sorted = [...DATA.G6].sort((a, b) => a.detection_date.localeCompare(b.detection_date));
@@ -2941,7 +2987,7 @@ function renderDailySource() {
   const peak = Math.max(...dailyTotals);
   const yMax = SMOOTH_OUTLIER ? getOutlierCap(sorted.map((d,i) => ({tenants: dailyTotals[i]})), 'tenants') : undefined;
 
-  const ctx = document.getElementById('chart-daily-source').getContext('2d');
+  const ctx = el.getContext('2d');
   chartInstances['daily-source'] = new Chart(ctx, {
     type: 'bar',
     data: {
