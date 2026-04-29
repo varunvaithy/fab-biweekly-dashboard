@@ -1787,6 +1787,7 @@ function renderSourceMix() {
   if (!el) return;
   const ctx = el.getContext('2d');
   const total = sources.reduce((s, d) => s + d.tenants, 0);
+  const totalStorage = sources.reduce((s, d) => s + (d.storage_tb || 0), 0);
 
   // Friendly labels for the legend
   const friendlyName = {
@@ -1798,8 +1799,8 @@ function renderSourceMix() {
   };
 
   const labelWithPct = sources.map(d => {
-    const pct = (d.tenants / total * 100).toFixed(1);
-    return (friendlyName[d.source] || d.source) + '  ' + fmt(d.tenants) + ' (' + pct + '%)';
+    const storagePct = totalStorage > 0 ? (d.storage_tb / totalStorage * 100).toFixed(1) : '0.0';
+    return (friendlyName[d.source] || d.source) + '  ' + fmtStorage(d.storage_tb) + ' (' + storagePct + '%)';
   });
 
   // Center text plugin (instance-scoped)
@@ -1810,12 +1811,12 @@ function renderSourceMix() {
       const cx = (left + right) / 2, cy = (top + bottom) / 2;
       c.save();
       c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.font = 'bold 18px Inter, system-ui, sans-serif';
+      c.font = 'bold 16px Inter, system-ui, sans-serif';
       c.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#e2e8f0';
-      c.fillText(fmt(total), cx, cy - 8);
+      c.fillText(fmtStorage(totalStorage), cx, cy - 8);
       c.font = '10px Inter, system-ui, sans-serif';
       c.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#94a3b8';
-      c.fillText('tenants', cx, cy + 10);
+      c.fillText('remediated', cx, cy + 10);
       c.restore();
     }
   };
@@ -1825,7 +1826,7 @@ function renderSourceMix() {
     data: {
       labels: labelWithPct,
       datasets: [{
-        data: sources.map(d => d.tenants),
+        data: sources.map(d => d.storage_tb || 0),
         backgroundColor: palette.slice(0, sources.length),
         borderWidth: 0,
         hoverOffset: 6
@@ -1840,10 +1841,11 @@ function renderSourceMix() {
             title: function(items) { return (friendlyName[sources[items[0].dataIndex].source] || sources[items[0].dataIndex].source); },
             label: function(ctx) {
               const s = sources[ctx.dataIndex];
-              const pct = (s.tenants / total * 100).toFixed(1);
+              const storagePct = totalStorage > 0 ? (s.storage_tb / totalStorage * 100).toFixed(1) : '0.0';
+              const tenantPct = (s.tenants / total * 100).toFixed(1);
               return [
-                fmt(s.tenants) + ' tenants remediated (' + pct + '%)',
-                fmtStorage(s.storage_tb) + ' storage reclaimed'
+                fmtStorage(s.storage_tb) + ' storage reclaimed (' + storagePct + '%)',
+                fmt(s.tenants) + ' tenants (' + tenantPct + '% of total)'
               ];
             }
           }
