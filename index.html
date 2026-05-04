@@ -280,11 +280,6 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
           <div style="font-size: 10px; color: var(--text-muted);">Biweekly · FP ÷ (remediated + FP) × 100</div>
         </div>
         <div style="display: flex; gap: 8px; align-items: stretch;">
-          <div id="hero-fp-pill" style="background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2); border-radius: 8px; padding: 6px 12px; text-align: center; min-width: 72px;">
-            <div style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px;">This Period</div>
-            <div style="font-size: 16px; font-weight: 800; color: #2563eb;" id="hero-fp">—</div>
-            <div style="font-size: 8px; color: var(--text-muted);" id="hero-fp-sub"></div>
-          </div>
           <div id="hero-fp-ytd-pill" style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 6px 12px; text-align: center; min-width: 72px;">
             <div style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px;">Nov'25+</div>
             <div style="font-size: 16px; font-weight: 800; color: #b45309;" id="hero-fp-ytd">—</div>
@@ -1808,17 +1803,7 @@ function renderHeroKPIs() {
     const elFpYtdCount = document.getElementById('hero-fp-ytd-count');
     if (elFpYtdCount) elFpYtdCount.textContent = fmt(totalFP) + ' FP / ' + fmt(totalRem) + ' remediated';
 
-    // This Period pill — from A4 period_num=0
-    let periodRate = 0, periodLabel = '0 FP this period';
-    if (DATA.A4 && DATA.A4.length) {
-      const curr = DATA.A4.find(r => r.period_num === 0) || DATA.A4[0];
-      periodRate = curr.fp_rate || 0;
-      periodLabel = (curr.fp || 0) + ' FP / ' + fmt(curr.tenants) + ' remediated';
-    }
-    const elFp = document.getElementById('hero-fp');
-    if (elFp) elFp.textContent = fmtPct(periodRate);
-    const elFpSub = document.getElementById('hero-fp-sub');
-    if (elFpSub) elFpSub.textContent = periodLabel;
+
   }
 }
 function renderStatusBoxes() {
