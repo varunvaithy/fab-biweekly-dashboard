@@ -3912,37 +3912,37 @@ function renderPipelineSnapshot() {
   const periodFP = aggregate(DATA.G4, fpKeys);
   const ytdFP = aggregate(DATA.G5, fpKeys);
 
+  // Row 1: RO / Block / Delete
   let html = '<div style="display:flex; gap:6px; align-items:stretch;">';
 
   stages.forEach(stage => {
     const p = aggregate(DATA.G4, stage.keys);
     const y = aggregate(DATA.G5, stage.keys);
-    html += '<div style="flex:1; background:' + stage.color + '08; border:1px solid ' + stage.color + '30; border-radius:8px; padding:8px 6px; text-align:center;">';
-    html += '<div style="font-size:9px; font-weight:700; color:' + stage.color + '; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:4px;">' + stage.label + '</div>';
+    html += '<div style="flex:1; background:' + stage.color + '08; border:1px solid ' + stage.color + '30; border-radius:8px; padding:10px 6px; text-align:center;">';
+    html += '<div style="font-size:9px; font-weight:700; color:' + stage.color + '; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:6px;">' + stage.label + '</div>';
+    // Nov'25+ section
+    html += '<div style="font-size:8px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Nov\u201925+</div>';
     html += '<div style="font-size:16px; font-weight:800; color:#1e293b;">' + fmt(y.count) + '</div>';
     html += '<div style="font-size:9px; color:var(--text-muted);">' + fmtStorage(y.storage) + '</div>';
-    if (p.count > 0) {
-      html += '<div style="margin-top:4px; padding-top:4px; border-top:1px solid ' + stage.color + '20;">';
-      html += '<span style="font-size:11px; font-weight:700; color:' + stage.color + ';">' + fmt(p.count) + '</span>';
-      html += '<span style="font-size:8px; color:var(--text-muted);"> this period</span>';
-      html += '</div>';
-    }
+    // This Period section
+    html += '<div style="margin-top:6px; padding-top:6px; border-top:1px solid ' + stage.color + '20;">';
+    html += '<div style="font-size:8px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">This Period</div>';
+    html += '<div style="font-size:13px; font-weight:700; color:' + stage.color + ';">' + fmt(p.count) + '</div>';
+    html += '<div style="font-size:9px; color:var(--text-muted);">' + fmtStorage(p.storage) + '</div>';
+    html += '</div>';
     html += '</div>';
   });
+  html += '</div>';
 
-  // FP box
-  html += '<div style="flex:1; background:#ec489908; border:1px dashed #ec489940; border-radius:8px; padding:8px 6px; text-align:center;">';
-  html += '<div style="font-size:9px; font-weight:700; color:#ec4899; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:4px;">FP Exit</div>';
-  html += '<div style="font-size:16px; font-weight:800; color:#1e293b;">' + fmt(ytdFP.count) + '</div>';
-  html += '<div style="font-size:9px; color:var(--text-muted);">' + fmtStorage(ytdFP.storage) + '</div>';
-  if (periodFP.count > 0) {
-    html += '<div style="margin-top:4px; padding-top:4px; border-top:1px dashed #ec489920;">';
-    html += '<span style="font-size:11px; font-weight:700; color:#ec4899;">' + fmt(periodFP.count) + '</span>';
-    html += '<span style="font-size:8px; color:var(--text-muted);"> this period</span>';
-    html += '</div>';
-  }
-  html += '</div>';
-  html += '</div>';
+  // Row 2: FP Exit (separate row below)
+  html += '<div style="margin-top:6px; display:flex; gap:6px;">';
+  html += '<div style="flex:1; background:#ec489908; border:1px dashed #ec489940; border-radius:8px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between;">';
+  html += '<div style="font-size:9px; font-weight:700; color:#ec4899; text-transform:uppercase; letter-spacing:0.3px;">FP Exit</div>';
+  html += '<div style="display:flex; gap:16px; align-items:center;">';
+  html += '<div style="text-align:center;"><div style="font-size:8px; color:var(--text-muted); text-transform:uppercase;">Nov\u201925+</div><div style="font-size:14px; font-weight:800; color:#1e293b;">' + fmt(ytdFP.count) + '</div><div style="font-size:9px; color:var(--text-muted);">' + fmtStorage(ytdFP.storage) + '</div></div>';
+  html += '<div style="width:1px; height:28px; background:#ec489930;"></div>';
+  html += '<div style="text-align:center;"><div style="font-size:8px; color:var(--text-muted); text-transform:uppercase;">This Period</div><div style="font-size:14px; font-weight:800; color:#ec4899;">' + fmt(periodFP.count) + '</div><div style="font-size:9px; color:var(--text-muted);">' + fmtStorage(periodFP.storage) + '</div></div>';
+  html += '</div></div></div>';
 
   // Summary line
   const totalRem = aggregate(DATA.G5, ['ReadOnly', 'Block', 'Delete']);
