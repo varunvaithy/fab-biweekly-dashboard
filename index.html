@@ -1758,8 +1758,10 @@ function momArrow(current, previous, invert = false) {
 }
 
 function getRemediated(arr) {
-  if (!arr || !arr.length) return 0;
-  return arr.reduce((s, r) => s + (r.storage_tb || 0), 0);
+  if (!arr || !arr.length) return { tenants: 0, storage_tb: 0 };
+  const remStatuses = ['ReadOnly Completed', 'Block Completed', 'Delete Completed', 'ReadOnly In-Progress', 'Block In-Progress', 'Delete In-Progress'];
+  const rem = arr.filter(r => remStatuses.some(s => (r.status || '').includes(s)));
+  return { tenants: rem.reduce((s,r) => s + (r.count || 0), 0), storage_tb: rem.reduce((s,r) => s + (r.storage_tb || 0), 0) };
 }
 
 function getAuthoritativeStorage() {
@@ -3402,7 +3404,7 @@ function renderWhatsNew() {
     if (progressed.length > 0) {
       const examples = progressed.slice(0, 2).map(pi => {
         const cur = DATA.INV.find(i => i.id === pi.id);
-        return `${cur.id} ${Math.round(pi.remediation_pct*100)}%\u2192${Math.round(cur.remediation_pct*100)}%`;
+        return `${cur.id} ${Math.round(pi.remediation_pct)}%\u2192${Math.round(cur.remediation_pct)}%`;
       }).join(', ');
       const more = progressed.length > 2 ? ` +${progressed.length - 2} more` : '';
       fragments.push(`Remediation progress: ${examples}${more}`);
@@ -3606,7 +3608,9 @@ function renderInvestigations() {
     legal:       { icon: '\u2696\ufe0f', color: 'var(--rose)', label: 'CELA/Legal' },
     ingestion:   { icon: '\ud83d\udce5', color: 'var(--accent)', label: 'Ingestion' },
     blocked:     { icon: '\ud83d\udeab', color: 'var(--rose)', label: 'Blocked' },
-    complete:    { icon: '\ud83c\udfc1', color: 'var(--green)', label: 'Complete' }
+    complete:    { icon: '\ud83c\udfc1', color: 'var(--green)', label: 'Complete' },
+    report:      { icon: '\ud83d\udcc4', color: 'var(--accent)', label: 'Report' },
+    update:      { icon: '\ud83d\udccc', color: 'var(--text-muted)', label: 'Update' }
   };
 
   // ── Activity banner + feed: collect all updates across investigations ──
@@ -3644,7 +3648,7 @@ function renderInvestigations() {
     if (feedItems.length > 0) {
       feedEl.innerHTML = '<div style="display: flex; flex-direction: column; gap: 6px;">' +
         feedItems.map(u => {
-          const ts = tagStyle[u.tag] || { icon: '\ud83d\udccc', color: 'var(--text-muted)', label: '' };
+          const ts = tagStyle[u.type] || { icon: '\ud83d\udccc', color: 'var(--text-muted)', label: '' };
           const daysAgo = daysSince(u.date);
           const recency = daysAgo <= 3 ? ' <span style="background:rgba(34,197,94,0.15); color:var(--green); padding:1px 5px; border-radius:8px; font-size:9px; font-weight:600;">RECENT</span>' : '';
           var invName = (allINV.find(function(x) { return x.id === u.invId; }) || {}).name || '';
@@ -3671,14 +3675,15 @@ function renderInvestigations() {
   if (el8) el8.textContent = fmt(periodUpdates.length);
 
   // Stack-rank: score by combined impact
+  const statusScore = { active: 500, ready: 400, inprogress: 500, pending: 200, complete: 0 };
   const sorted = [...adhocINV].sort((a, b) => {
-    const scoreA = (a.storage_used_tb || 0) + (a.storage_prov_tb || 0) / 10 + (a.status === 'inprogress' ? 500 : a.status === 'pending' ? 200 : 0) + Math.max(0, 30 - daysSince(a.date)) + (a.priority ? 1000 : 0);
-    const scoreB = (b.storage_used_tb || 0) + (b.storage_prov_tb || 0) / 10 + (b.status === 'inprogress' ? 500 : b.status === 'pending' ? 200 : 0) + Math.max(0, 30 - daysSince(b.date)) + (b.priority ? 1000 : 0);
+    const scoreA = (a.storage_used_tb || 0) + (a.storage_prov_tb || 0) / 10 + (statusScore[a.status] || 0) + Math.max(0, 30 - daysSince(a.date)) + (a.priority ? 1000 : 0);
+    const scoreB = (b.storage_used_tb || 0) + (b.storage_prov_tb || 0) / 10 + (statusScore[b.status] || 0) + Math.max(0, 30 - daysSince(b.date)) + (b.priority ? 1000 : 0);
     return scoreB - scoreA;
   });
 
   const statusBadge = inv => {
-    const map = { complete: { bg: 'rgba(22,163,74,0.12)', color: 'var(--green)', label: 'Complete' }, inprogress: { bg: 'rgba(37,99,235,0.12)', color: 'var(--accent)', label: 'In Progress' }, pending: { bg: 'rgba(234,88,12,0.12)', color: 'var(--orange)', label: 'Pending' } };
+    const map = { complete: { bg: 'rgba(22,163,74,0.12)', color: 'var(--green)', label: 'Complete' }, active: { bg: 'rgba(37,99,235,0.12)', color: 'var(--accent)', label: 'In Progress' }, inprogress: { bg: 'rgba(37,99,235,0.12)', color: 'var(--accent)', label: 'In Progress' }, ready: { bg: 'rgba(168,85,247,0.12)', color: '#a855f7', label: 'Ready' }, pending: { bg: 'rgba(234,88,12,0.12)', color: 'var(--orange)', label: 'Pending' } };
     const s = map[inv.status] || { bg: 'rgba(0,0,0,0.05)', color: 'var(--text-muted)', label: inv.status };
     return '<span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:500; background:' + s.bg + '; color:' + s.color + ';">' + s.label + '</span>';
   };
@@ -3696,7 +3701,7 @@ function renderInvestigations() {
       '<div style="font-size: 10px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Progress Timeline</div>' +
       '<div style="position: relative; padding-left: 14px; border-left: 2px solid rgba(0,0,0,0.08);">';
     inv.updates.forEach(function(u, i) {
-      var ts = tagStyle[u.tag] || { icon: '\ud83d\udccc', color: 'var(--text-muted)', label: '' };
+      var ts = tagStyle[u.type] || { icon: '\ud83d\udccc', color: 'var(--text-muted)', label: '' };
       var isLast = i === inv.updates.length - 1;
       var dotColor = isLast ? ts.color : 'rgba(0,0,0,0.15)';
       html += '<div style="position: relative; padding: 3px 0 6px 8px; font-size: 11px; line-height: 1.5;">' +
@@ -3713,14 +3718,14 @@ function renderInvestigations() {
   function rowHTML(inv) {
     const usedStr = inv.storage_used_tb > 0 ? fmtStorage(inv.storage_used_tb) : '\u2014';
     const provNote = inv.storage_prov_tb > 0 ? '<br><span style="font-size:9px; color:var(--text-muted);">+ ' + fmtStorage(inv.storage_prov_tb) + ' prov.</span>' : '';
-    const remBar = inv.remediation_pct > 0 && inv.remediation_pct < 1 ? '<div class="progress-bar" style="width:60px; display:inline-block; vertical-align:middle; margin-left:4px;"><div class="fill" style="width:' + Math.round(inv.remediation_pct*100) + '%; background:var(--green);"></div></div>' : '';
+    const remBar = inv.remediation_pct > 0 && inv.remediation_pct < 100 ? '<div class="progress-bar" style="width:60px; display:inline-block; vertical-align:middle; margin-left:4px;"><div class="fill" style="width:' + inv.remediation_pct + '%; background:var(--green);"></div></div>' : '';
     const isNew = DATA.periodStart && inv.date >= DATA.periodStart && inv.date <= DATA.periodEnd;
     const newBadge = isNew ? '<span class="badge-new">NEW</span>' : '';
     let trajNote = '';
     if (DATA.PREV && DATA.PREV.inv) {
       const pi = DATA.PREV.inv.find(p => p.id === inv.id);
       if (pi && inv.remediation_pct > pi.remediation_pct) {
-        trajNote = ' <span style="font-size:10px; color:var(--green);">\u2191 was ' + Math.round(pi.remediation_pct*100) + '%</span>';
+        trajNote = ' <span style="font-size:10px; color:var(--green);">\u2191 was ' + Math.round(pi.remediation_pct) + '%</span>';
       }
     }
 
@@ -3761,8 +3766,8 @@ function renderInvestigations() {
   const highlights = sorted.filter(inv => inv.priority || (inv.storage_used_tb >= 500) || (inv.storage_prov_tb >= 1000)).slice(0, 5);
   const hlContainer = document.getElementById('investigation-highlights');
   if (hlContainer && highlights.length) {
-    const statusColor = { complete: 'var(--green)', inprogress: 'var(--accent)', pending: 'var(--orange)' };
-    const statusLabel = { complete: 'Complete', inprogress: 'In Progress', pending: 'Pending' };
+    const statusColor = { complete: 'var(--green)', active: 'var(--accent)', inprogress: 'var(--accent)', ready: '#a855f7', pending: 'var(--orange)' };
+    const statusLabel = { complete: 'Complete', active: 'In Progress', inprogress: 'In Progress', ready: 'Ready', pending: 'Pending' };
     hlContainer.innerHTML = highlights.map(inv => {
       const usedStr = inv.storage_used_tb > 0 ? fmtStorage(inv.storage_used_tb) + ' used' : '';
       const provStr = inv.storage_prov_tb > 0 ? fmtStorage(inv.storage_prov_tb) + ' provisioned' : '';
@@ -3793,7 +3798,7 @@ function renderInvestigations() {
   // Impact summary (adhoc only — excludes DS-sourced)
   const totalTenants = adhocINV.reduce((s, i) => s + i.tenants, 0);
   const totalUsed = adhocINV.reduce((s, i) => s + (i.storage_used_tb || 0), 0);
-  const totalRemediated = adhocINV.reduce((s, i) => s + (i.storage_used_tb || 0) * (i.remediation_pct || 0), 0);
+  const totalRemediated = adhocINV.reduce((s, i) => s + (i.storage_used_tb || 0) * ((i.remediation_pct || 0) / 100), 0);
   const el4 = document.getElementById('inv-total-tenants');
   const el5 = document.getElementById('inv-total-storage-used');
   const el6 = document.getElementById('inv-total-storage-remediated');
@@ -3809,8 +3814,8 @@ function renderYTDExec(ytd) {
 function renderYTDDetection(ytd) {
   const bar = document.getElementById('detect-ytd-bar');
   bar.style.display = 'flex';
-  // Tenants from G5 snapshot, storage from C2b (authoritative)
-  const remG5 = getAuthoritativeStorage();
+  // Tenants from G5 remediated statuses, storage from C2b (authoritative)
+  const remG5 = getRemediated(DATA.G5);
   document.getElementById('detect-ytd-tenants').textContent = fmt(remG5.tenants);
   document.getElementById('detect-ytd-storage').textContent = fmtStorage(getAuthoritativeStorage());
   // Active detection sources: count distinct non-zero sources from G6 data
@@ -4023,7 +4028,7 @@ function openReportModal(invId) {
     html += '<span><strong>Tenants:</strong> ' + inv.tenants.toLocaleString() + '</span>';
     if (inv.storage_used_tb > 0) html += '<span><strong>Storage:</strong> ' + (inv.storage_used_tb >= 1024 ? (inv.storage_used_tb/1024).toFixed(2) + ' PB' : inv.storage_used_tb + ' TB') + '</span>';
     if (inv.icm) html += '<span><strong>ICM:</strong> <a href="https://portal.microsofticm.com/imp/v5/incidents/details/' + inv.icm + '" target="_blank" style="color:var(--accent);">' + inv.icm + '</a></span>';
-    html += '<span><strong>Remediation:</strong> ' + Math.round(inv.remediation_pct*100) + '%</span>';
+    html += '<span><strong>Remediation:</strong> ' + Math.round(inv.remediation_pct) + '%</span>';
     html += '</div>';
     // Full report content
     html += '<div class="embedded-report">' + REPORTS[invId] + '</div>';
@@ -4031,7 +4036,7 @@ function openReportModal(invId) {
   } else {
     // Fallback: show summary from INV data
     let html = '';
-    html += '<div style="margin-bottom:12px;"><strong>Status:</strong> ' + inv.status.charAt(0).toUpperCase() + inv.status.slice(1) + ' &bull; <strong>Remediation:</strong> ' + Math.round(inv.remediation_pct*100) + '%</div>';
+    html += '<div style="margin-bottom:12px;"><strong>Status:</strong> ' + inv.status.charAt(0).toUpperCase() + inv.status.slice(1) + ' &bull; <strong>Remediation:</strong> ' + Math.round(inv.remediation_pct) + '%</div>';
     html += '<div style="margin-bottom:12px;"><strong>Tenants:</strong> ' + inv.tenants.toLocaleString() + ' &bull; ';
     if (inv.storage_used_tb > 0) html += '<strong>Storage Used:</strong> ' + (inv.storage_used_tb >= 1024 ? (inv.storage_used_tb/1024).toFixed(2) + ' PB' : inv.storage_used_tb + ' TB');
     if (inv.storage_prov_tb > 0) html += ' + <strong>Provisioned:</strong> ' + (inv.storage_prov_tb >= 1024 ? (inv.storage_prov_tb/1024).toFixed(2) + ' PB' : inv.storage_prov_tb + ' TB');
