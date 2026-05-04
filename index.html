@@ -338,18 +338,6 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
     </div>
   </div>
 
-  <div id="insights-signals-container"></div>
-
-  <div class="card" style="margin-bottom: 16px; border-left: 4px solid #22c55e;">
-    <div class="card-title" style="color: #22c55e;">&#128465; Deletion Pilot Plan <span class="tag">Starting May 2026</span></div>
-    <div style="font-size: 12px; line-height: 1.6; color: var(--text);">
-      <p style="margin: 0 0 8px 0;"><strong>Phase 1 (May 2026):</strong> Begin deletion of fully-blocked tenants that have been in Block state &gt;30 days with zero user activity. Target: ~14,900 tenants (Block Completed from G5).</p>
-      <p style="margin: 0 0 8px 0;"><strong>Phase 2 (June 2026):</strong> Automated deletion pipeline for tenants completing the Block &rarr; Delete lifecycle. Expected throughput: 2,000 tenants/week.</p>
-      <p style="margin: 0 0 8px 0;"><strong>Criteria:</strong> Block Completed + 30-day dwell + zero sign-in activity + no active appeal/CELA hold.</p>
-      <p style="margin: 0;"><strong>Impact:</strong> Estimated ~69 PB storage reclamation from completed blocks. Reduces backlog from ~15K to &lt;1K active tenants.</p>
-    </div>
-  </div>
-
 
 </div>
 
@@ -1619,19 +1607,28 @@ const DATA = {
     { source: "Manual", tenants: 72, storage_tb: 549.760 }
   ],
 
-  // INV: Investigation registry (manually maintained)
+  // INV: Investigation registry — synced from Investigation_Tracker.md (May 4, 2026)
+  // storage_used_tb = Claimed Storage (actual disk used), storage_prov_tb = Potential/Provisioned
   INV: [
-    { id: 'INV-001', name: 'TM9/TM10 Fraud Ring', status: 'complete', date: '2026-01-15', closed: '2026-03-10', tenants: 715, storage_prov_tb: 4800, storage_used_tb: 0, remediation_pct: 100, priority: 'high', desc: 'Large-scale fraud ring using TM9/TM10 pattern', report: 'INV-001', updates: [{date:'2026-03-10',type:'complete',text:'All 715 tenants blocked and deleted. 4.8 PB reclaimed.'}] },
-    { id: 'INV-002', name: '50-Tenant Cluster', status: 'complete', date: '2026-03-24', closed: '2026-04-10', tenants: 50, storage_prov_tb: 620, storage_used_tb: 0, remediation_pct: 100, priority: 'medium', desc: '50-tenant investigation cluster', report: 'INV-002', updates: [{date:'2026-04-10',type:'complete',text:'Fully remediated'}] },
-    { id: 'INV-003', name: '163-Tenant Cluster', status: 'complete', date: '2026-03-26', closed: '2026-04-15', tenants: 163, storage_prov_tb: 2100, storage_used_tb: 0, remediation_pct: 100, priority: 'high', desc: '163-tenant bulk fraud cluster', report: 'INV-003', updates: [{date:'2026-04-02',type:'update',text:'24 tenants newly ingested. 163/163 GUIDs resolved.'},{date:'2026-04-15',type:'complete',text:'All tenants remediated'}] },
-    { id: 'INV-004', name: 'E5 Dev Ring', status: 'active', date: '2026-03-28', tenants: 134, storage_prov_tb: 1370, storage_used_tb: 340, remediation_pct: 75, priority: 'high', desc: 'E5 Developer SKU abuse ring exploiting dev quotas', report: 'INV-004', updates: [{date:'2026-04-01',type:'report',text:'Investigation report published'},{date:'2026-04-20',type:'remediation',text:'75% blocked, monitoring remaining 25%'}] },
-    { id: 'INV-005', name: 'ACGDB Ring', status: 'complete', date: '2026-03-28', closed: '2026-04-18', tenants: 89, storage_prov_tb: 910, storage_used_tb: 0, remediation_pct: 100, priority: 'medium', desc: 'ACGDB pattern fraud ring', report: 'INV-005', updates: [{date:'2026-04-01',type:'report',text:'Investigation report published'},{date:'2026-04-18',type:'complete',text:'Ring fully disrupted'}] },
-    { id: 'INV-006', name: 'MistyCloud Ring', status: 'complete', date: '2026-03-28', closed: '2026-04-16', tenants: 45, storage_prov_tb: 460, storage_used_tb: 0, remediation_pct: 100, priority: 'medium', desc: 'MistyCloud infrastructure abuse', report: 'INV-006', updates: [{date:'2026-04-01',type:'report',text:'Investigation report published'},{date:'2026-04-16',type:'complete',text:'Remediated and blocklisted'}] },
-    { id: 'INV-007', name: 'Procode Ring', status: 'active', date: '2026-03-28', tenants: 67, storage_prov_tb: 686, storage_used_tb: 137, remediation_pct: 80, priority: 'medium', desc: 'Procode pattern abusing trial SKUs', report: 'INV-007', updates: [{date:'2026-04-01',type:'report',text:'Investigation report published'},{date:'2026-04-25',type:'remediation',text:'80% remediated, 20% pending CELA review'}] },
-    { id: 'INV-008', name: 'EDU CN/VN Network', status: 'active', date: '2026-03-30', tenants: 1247, storage_prov_tb: 12760, storage_used_tb: 5100, remediation_pct: 60, priority: 'critical', desc: 'Large EDU fraud network from CN/VN origins', report: 'INV-008', updates: [{date:'2026-04-03',type:'report',text:'Investigation report published'},{date:'2026-04-15',type:'escalation',text:'Escalated to CELA for geo-blocking'},{date:'2026-04-28',type:'remediation',text:'60% remediated, new sign-ups arriving'}] },
-    { id: 'INV-009', name: 'Fraud Ring Consolidation', status: 'complete', date: '2026-03-30', closed: '2026-04-20', tenants: 200, storage_prov_tb: 2500, storage_used_tb: 0, remediation_pct: 100, priority: 'medium', desc: 'Consolidated smaller rings under common infrastructure', report: 'INV-009', updates: [{date:'2026-04-02',type:'report',text:'Consolidation report published'},{date:'2026-04-20',type:'complete',text:'All sub-rings remediated'}] },
-    { id: 'INV-010', name: 'Archetype G At Scale', status: 'active', date: '2026-04-03', tenants: 44576, storage_prov_tb: 15770, storage_used_tb: 790, remediation_pct: 95, priority: 'critical', ds_sourced: true, desc: 'R0 large batch detection (43K+ tenants)', report: 'INV-010', updates: [{date:'2026-04-03',type:'report',text:'Investigation report published'},{date:'2026-04-30',type:'remediation',text:'95% processed, 5% in appeal window'}] },
-    { id: 'INV-016', name: 'China Network Abuse', status: 'active', date: '2026-04-10', tenants: 312, storage_prov_tb: 3190, storage_used_tb: 1910, remediation_pct: 40, priority: 'high', desc: 'Network abuse from China-based actors', report: 'INV-016', updates: [{date:'2026-04-10',type:'report',text:'Investigation report published'},{date:'2026-04-13',type:'escalation',text:'CELA brief submitted'},{date:'2026-04-28',type:'remediation',text:'40% blocked, investigation ongoing'}] }
+    { id: 'INV-001', name: 'TM9/TM10 Fraud Ring', status: 'complete', date: '2025-05-31', closed: '2026-01-10', tenants: 4, storage_used_tb: 483, storage_prov_tb: 0, remediation_pct: 100, priority: 'medium', origin: 'post-hoc', desc: 'FAB auto-blocked 4 tenants — investigated ring structure and detection gaps', report: 'INV-001', updates: [{date:'2025-05-31',type:'report',text:'Ring structure investigated'},{date:'2026-01-10',type:'complete',text:'All 4 tenants blocked and deleted. 483 TB reclaimed.'}] },
+    { id: 'INV-002', name: '50-Tenant Batch', status: 'complete', date: '2026-03-24', closed: '2026-04-01', tenants: 50, storage_used_tb: 351, storage_prov_tb: 0, remediation_pct: 100, priority: 'medium', origin: 'proactive', desc: 'Top-50 high-storage tenants from Kusto — spawned INV-004/005/015', report: 'INV-002', updates: [{date:'2026-03-24',type:'report',text:'Investigation report published. Spawned E5 Dev + ACGDB sub-investigations.'},{date:'2026-04-01',type:'complete',text:'De-duped: 351 TB net (gross 4,062 TB attributed to child investigations)'}] },
+    { id: 'INV-003', name: '163-Tenant Investigation', status: 'active', date: '2026-03-25', tenants: 163, storage_used_tb: 570, storage_prov_tb: 0, remediation_pct: 70, priority: 'high', origin: 'mixed', icm: '772521650', desc: 'Expand INV-002 — high-storage tenants beyond top 50', report: 'INV-003', updates: [{date:'2026-04-02',type:'update',text:'24 tenants newly ingested. 163/163 GUIDs resolved.'},{date:'2026-05-04',type:'remediation',text:'300 TB blocked, 270 TB untracked. 18 pre-existing blocks confirmed, 1 stuck.'}] },
+    { id: 'INV-004', name: 'E5 Dev 4-Char Ring', status: 'active', date: '2026-04-01', tenants: 31, storage_used_tb: 2995, storage_prov_tb: 0, remediation_pct: 65, priority: 'high', origin: 'proactive', icm: '771886996', desc: 'Cluster of 4-char-named E5 Dev tenants from INV-002', report: 'INV-004', updates: [{date:'2026-04-01',type:'report',text:'Investigation report published'},{date:'2026-05-04',type:'remediation',text:'20/31 in FAB. 17 BLOCK_SUCCESS + 3 READONLY_SUCCESS (stuck BLOCK_FAIL). 11 not ingestible (1,064 TB).'}] },
+    { id: 'INV-005', name: 'ACGDB / SakuraPY Ring', status: 'active', date: '2026-04-01', tenants: 33, storage_used_tb: 597, storage_prov_tb: 39936, remediation_pct: 64, priority: 'medium', origin: 'proactive', icm: '771886996', desc: 'ACGDB-numbered tenants abusing EDU licenses', report: 'INV-005', updates: [{date:'2026-04-01',type:'report',text:'Investigation report published'},{date:'2026-05-04',type:'remediation',text:'21/33 ingested, 12 pending (EDU + empty shells)'}] },
+    { id: 'INV-006', name: 'MistyCloud Ring', status: 'active', date: '2026-04-01', tenants: 13, storage_used_tb: 3867, storage_prov_tb: 0, remediation_pct: 80, priority: 'high', origin: 'proactive', icm: '771980255', desc: 'Extreme blob-write outliers — single-actor ring', report: 'INV-006', updates: [{date:'2026-04-01',type:'report',text:'Investigation report published'},{date:'2026-05-04',type:'remediation',text:'12 ingested, remediation pipeline running'}] },
+    { id: 'INV-007', name: 'Procode Multiplexing', status: 'complete', date: '2026-04-01', closed: '2026-04-15', tenants: 32, storage_used_tb: 0, storage_prov_tb: 32, remediation_pct: 0, priority: 'low', origin: 'proactive', desc: 'Tenant multiplexing to bypass per-tenant limits — dormant', report: 'INV-007', updates: [{date:'2026-04-01',type:'report',text:'Investigation report published'},{date:'2026-04-15',type:'complete',text:'Mapped only — pending enforcement decision. 0 TB actual disk usage.'}] },
+    { id: 'INV-008', name: 'EDU CN/VN', status: 'active', date: '2026-04-02', tenants: 43, storage_used_tb: 255, storage_prov_tb: 60, remediation_pct: 85, priority: 'high', origin: 'proactive', icm: '772521899', desc: 'CN/VN EDU tenants on approved TLD list — segment abuse', report: 'INV-008', updates: [{date:'2026-04-03',type:'report',text:'Investigation report published. Spawned INV-010/011/012/019.'},{date:'2026-04-07',type:'remediation',text:'7/10 sampled READONLY_SUCCESS.'},{date:'2026-05-04',type:'update',text:'Mostly resolved. 3 stuck Status 1 (NDLG, HAZE5, afba3f73). TSCN 237 TB needs manual check.'}] },
+    { id: 'INV-009', name: 'D2K Fraud Rings', status: 'active', date: '2026-04-02', tenants: 8939, storage_used_tb: 0, storage_prov_tb: 465, remediation_pct: 0, priority: 'medium', origin: 'proactive', desc: 'Hamter + China Burst + shheqing — cross-shard bot farms', report: 'INV-009', updates: [{date:'2026-04-02',type:'report',text:'Consolidation report published'},{date:'2026-05-04',type:'update',text:'Mapped only — 0 in FAB. Pending enforcement.'}] },
+    { id: 'INV-010', name: 'Archetype G At-Scale', status: 'active', date: '2026-04-03', tenants: 6, storage_used_tb: 499, storage_prov_tb: 0, remediation_pct: 90, priority: 'high', origin: 'proactive', icm: '772521899', desc: 'VN EDU tenants repurposed for fraud (from INV-008)', report: 'INV-010', updates: [{date:'2026-04-03',type:'report',text:'Investigation report published'},{date:'2026-04-07',type:'remediation',text:'All 4 in-FAB tenants READONLY_SUCCESS (QT 443 TB + FVRTY 35 TB + IZONE 17 TB + MUN 3 TB).'},{date:'2026-05-04',type:'update',text:'Stuck BLOCK_FAIL (D2K/VL flags). ~3 TB not ingested.'}] },
+    { id: 'INV-011', name: 'EDU-DECLINED Ghost Tenants', status: 'ready', date: '2026-04-05', tenants: 2902, storage_used_tb: 0, storage_prov_tb: 2355, remediation_pct: 0, priority: 'high', origin: 'proactive', desc: 'Global EDU-declined ghost tenants (R2 signal) — 99.5% precision validated', report: 'INV-011', updates: [{date:'2026-04-05',type:'report',text:'Report published. 2,902 tenants mapped.'},{date:'2026-05-04',type:'update',text:'Ready for bulk enforcement. 200 validated, 99.5% precision.'}] },
+    { id: 'INV-012', name: 'R3 Commercial EDU Signal', status: 'ready', date: '2026-04-06', tenants: 47800, storage_used_tb: 0, storage_prov_tb: 1032, remediation_pct: 0, priority: 'high', origin: 'proactive', desc: 'Commercial tenants with EDU signals that never paid — ghost shells', report: 'INV-012', updates: [{date:'2026-04-06',type:'report',text:'Report published. ~47,800 tenants mapped.'},{date:'2026-05-04',type:'update',text:'Ready for auto-flag enforcement. 0% FP (100 validated).'}] },
+    { id: 'INV-013', name: 'StableBit CloudDrive', status: 'complete', date: '2026-04-07', closed: '2026-04-07', tenants: 9, storage_used_tb: 25, storage_prov_tb: 0, remediation_pct: 100, priority: 'medium', origin: 'proactive', icm: '775153741', desc: 'StableBit CloudDrive app enabling cloud storage reselling', report: 'INV-013', updates: [{date:'2026-04-07',type:'complete',text:'All 9 tenants READONLY_SUCCESS. XMAN ASTRO (22 TB) + MSFT ring (4 tenants).'}] },
+    { id: 'INV-014', name: 'DS Model Investigation', status: 'active', date: '2026-04-07', tenants: 944, storage_used_tb: 4142, storage_prov_tb: 0, remediation_pct: 50, priority: 'high', origin: 'ds', ds_sourced: true, icm: '775773500', desc: 'DS model flagged 944 tenants — impact attributed to DS separately', report: 'INV-014', updates: [{date:'2026-04-07',type:'report',text:'DS investigation master report published'},{date:'2026-05-04',type:'remediation',text:'In-progress, expanding. ~4.0 PB attributed to DS.'}] },
+    { id: 'INV-015', name: 'F1 Soft-Quota Abuse', status: 'active', date: '2026-04-09', tenants: 12, storage_used_tb: 1385, storage_prov_tb: 0, remediation_pct: 92, priority: 'high', origin: 'proactive', icm: '776384949', desc: 'F1 ($2.25/mo) tenants exploiting soft-quota enforcement', report: 'INV-015', updates: [{date:'2026-04-09',type:'report',text:'Investigation report published'},{date:'2026-05-04',type:'remediation',text:'11/12 READONLY_SUCCESS. 24098c20 (135 TB) stuck Status 1 — 15 days, no schedule.'}] },
+    { id: 'INV-016', name: 'China Network Abuse', status: 'active', date: '2026-04-10', tenants: 162, storage_used_tb: 3040, storage_prov_tb: 0, remediation_pct: 50, priority: 'high', origin: 'mixed', icm: '718092350', desc: 'E SKU misconfiguration causing 90K+ CN tenant signups — 162 confirmed abusive', report: 'INV-016', updates: [{date:'2026-04-10',type:'report',text:'Investigation report published'},{date:'2026-04-13',type:'escalation',text:'CELA brief submitted'},{date:'2026-04-15',type:'remediation',text:'All 162 ingested'},{date:'2026-05-04',type:'update',text:'~50% READONLY_SUCCESS, ~42% stuck Status 1, ~8% edge cases.'}] },
+    { id: 'INV-017', name: 'Brand Impersonation', status: 'ready', date: '2026-04-24', tenants: 4, storage_used_tb: 34, storage_prov_tb: 370, remediation_pct: 0, priority: 'medium', origin: 'proactive', desc: '898 EDU tenants screened for MS/O365 brand impersonation — 4 validated', report: 'INV-017', updates: [{date:'2026-04-24',type:'report',text:'4 validated cases + 898 candidates (13 CRITICAL, 85 HIGH)'},{date:'2026-05-04',type:'update',text:'3 ready for immediate ingestion. 1 conditional (Thai school needs contact).'}] },
+    { id: 'INV-018', name: 'Unflagged Fraud Validation', status: 'ready', date: '2026-04-24', tenants: 35, storage_used_tb: 251, storage_prov_tb: 9114, remediation_pct: 0, priority: 'high', origin: 'proactive', desc: 'Random + HIGH/CRITICAL tier sampling of unflagged EDU tenants', report: 'INV-018', updates: [{date:'2026-04-24',type:'report',text:'35 confirmed fraud from sampling (68% fraud rate in HIGH+CRITICAL tier)'},{date:'2026-05-04',type:'update',text:'All 35 ready for bulk ingestion. ~8.9 PB extrapolated exposure.'}] },
+    { id: 'INV-019', name: 'EDU At-Scale Fraud', status: 'active', date: '2026-04-22', tenants: 70, storage_used_tb: 1670, storage_prov_tb: 5325, remediation_pct: 0, priority: 'critical', origin: 'proactive', desc: '1.787M EDU tenants analyzed — detection gap assessment + cohort validation', report: 'INV-019', updates: [{date:'2026-04-22',type:'report',text:'Landscape report: 1.787M EDU tenants. 70+ undetected fraud identified.'},{date:'2026-05-04',type:'update',text:'Tier2 cohort (3,568) + PendingApproval ghosts (4,301) ready for enforcement. 18+ rings catalogued. ~247 PB dormant weaponizable.'}] }
   ]
 };
 
@@ -2013,6 +2010,42 @@ function renderAlerts() {
     const roData = DATA.B2.find(d => d.action === 'ReadOnly');
     if (roData && roData.max_days > 365) {
       cards.push({ type: 'info', icon: '\uD83D\uDD12', title: 'ReadOnly max dwell: ' + fmt(roData.max_days) + ' days (' + (roData.max_days / 365).toFixed(1) + ' yrs)', body: `Some tenants have been in ReadOnly for over ${Math.floor(roData.max_days / 365)} years without progressing to Block. Avg is ${fmt(roData.avg_days)} days across ${fmt(roData.tenants)} tenants. Consider batch escalation.` });
+    }
+  }
+
+  // ── Merged Insights: Storage, FP, Pipeline, Investigations, Deletion ──
+  const authTB = getAuthoritativeStorage();
+  if (authTB > 0) {
+    const periodAdd = DATA.C2b && DATA.C2b.length ? fmtStorage(DATA.C2b[DATA.C2b.length-1].storage_tb || DATA.C2b[DATA.C2b.length-1].storage_pb * 1024) : 'N/A';
+    cards.push({ type: 'success', icon: '\uD83D\uDCC8', title: fmtStorage(authTB) + ' Total Storage Remediated (Nov\u201925\u2192Now)', body: 'Cumulative storage impact. This period added ' + periodAdd + '.' });
+  }
+  if (DATA.A3c) {
+    const totalFP = DATA.A3c.reduce((s,r) => s + r.fp, 0);
+    const totalDecided = DATA.A3c.reduce((s,r) => s + r.remediated + r.fp, 0);
+    const rate = (totalFP / totalDecided * 100).toFixed(2);
+    const worstRule = DATA.A3c.reduce((w, r) => r.fp_rate > (w.fp_rate||0) ? r : w, {});
+    cards.push({ type: rate < 3 ? 'success' : 'warning', icon: '\u2705', title: rate + '% FP Rate (' + totalFP + ' FP / ' + fmt(totalDecided) + ' decided)', body: 'Highest: ' + worstRule.rule + ' at ' + worstRule.fp_rate + '%. Target: <5%.' });
+  }
+  if (DATA.B3) {
+    const succ = DATA.B3.reduce((s,d) => s + d.succeeded, 0);
+    const total = DATA.B3.reduce((s,d) => s + d.total, 0);
+    const pipeRate = (succ / total * 100).toFixed(1);
+    const blockRate = (DATA.B3.find(d=>d.action==='Block')||{success_rate:0}).success_rate;
+    const roRate = (DATA.B3.find(d=>d.action==='ReadOnly')||{success_rate:0}).success_rate;
+    cards.push({ type: pipeRate > 95 ? 'success' : 'warning', icon: '\u2699\uFE0F', title: pipeRate + '% Pipeline Success (' + fmt(total) + ' actions)', body: 'Block: ' + blockRate.toFixed(1) + '%, ReadOnly: ' + roRate.toFixed(1) + '%.' });
+  }
+  if (DATA.INV && DATA.INV.length) {
+    const active = DATA.INV.filter(i => i.status === 'active');
+    const ready = DATA.INV.filter(i => i.status === 'ready');
+    const complete = DATA.INV.filter(i => i.status === 'complete');
+    const totalUsed = DATA.INV.filter(i => !i.ds_sourced).reduce((s,i) => s + (i.storage_used_tb||0), 0);
+    cards.push({ type: 'info', icon: '\uD83D\uDD0D', title: DATA.INV.length + ' Investigations: ' + active.length + ' active, ' + ready.length + ' ready, ' + complete.length + ' complete', body: fmt(DATA.INV.filter(i=>!i.ds_sourced).reduce((s,i)=>s+i.tenants,0)) + ' tenants across adhoc investigations. ' + fmtStorage(totalUsed) + ' claimed storage identified.' });
+  }
+  if (DATA.G5) {
+    const blocked = DATA.G5.filter(d => d.status.includes('Block Completed')).reduce((s,d) => s + d.count, 0);
+    if (blocked > 0) {
+      const blockStorage = DATA.G5.filter(d => d.status.includes('Block Completed')).reduce((s,d) => s + d.storage_tb, 0);
+      cards.push({ type: 'success', icon: '\uD83D\uDDD1\uFE0F', title: '\uD83D\uDEAE Deletion Plan: ' + fmt(blocked) + ' tenants ready (Phase 1 \u2014 May 2026)', body: 'Block Completed + 30-day dwell + zero activity + no appeal/CELA hold. Estimated ' + fmtStorage(blockStorage) + ' reclamation. Target: reduce backlog from ~15K to <1K.' });
     }
   }
 
@@ -3920,86 +3953,6 @@ function renderPipelineSnapshot() {
 // INIT — Call all renderers
 // ============================================================================
 
-function renderInsights() {
-  const el = document.getElementById('insights-signals-container');
-  if (!el) return;
-
-  const insights = [];
-
-  // Storage insight
-  const authTB = getAuthoritativeStorage();
-  if (authTB > 0) {
-    insights.push({
-      icon: '\ud83d\udcc8', color: 'var(--green)',
-      title: fmtStorage(authTB) + ' Total Storage Remediated',
-      text: 'Cumulative storage impact since Nov 2025. This period added ' + 
-        (DATA.C2b && DATA.C2b.length ? fmtStorage(DATA.C2b[DATA.C2b.length-1].storage_tb || DATA.C2b[DATA.C2b.length-1].storage_pb * 1024) : 'N/A') + '.'
-    });
-  }
-
-  // FP insight
-  if (DATA.A3c) {
-    const totalFP = DATA.A3c.reduce((s,r) => s + r.fp, 0);
-    const totalDecided = DATA.A3c.reduce((s,r) => s + r.remediated + r.fp, 0);
-    const rate = (totalFP / totalDecided * 100).toFixed(2);
-    const worstRule = DATA.A3c.reduce((w, r) => r.fp_rate > (w.fp_rate||0) ? r : w, {});
-    insights.push({
-      icon: '\u2705', color: rate < 3 ? 'var(--green)' : 'var(--amber)',
-      title: rate + '% Overall FP Rate (' + totalFP + ' / ' + fmt(totalDecided) + ')',
-      text: 'Weighted FP across all rules. Highest: ' + worstRule.rule + ' at ' + worstRule.fp_rate + '%. Target: <5%.'
-    });
-  }
-
-  // Pipeline reliability
-  if (DATA.B3) {
-    const succ = DATA.B3.reduce((s,d) => s + d.succeeded, 0);
-    const total = DATA.B3.reduce((s,d) => s + d.total, 0);
-    const rate = (succ / total * 100).toFixed(1);
-    insights.push({
-      icon: '\u2699\ufe0f', color: rate > 95 ? 'var(--green)' : 'var(--amber)',
-      title: rate + '% Pipeline Success Rate',
-      text: 'Block: ' + (DATA.B3.find(d=>d.action==='Block')||{success_rate:0}).success_rate.toFixed(1) + '%, ReadOnly: ' + (DATA.B3.find(d=>d.action==='ReadOnly')||{success_rate:0}).success_rate.toFixed(1) + '%. ' + fmt(total) + ' total actions attempted.'
-    });
-  }
-
-  // Active investigations
-  if (DATA.INV && DATA.INV.length) {
-    const active = DATA.INV.filter(i => i.status === 'active');
-    const totalTenants = active.reduce((s,i) => s + i.tenants, 0);
-    insights.push({
-      icon: '\ud83d\udd0d', color: 'var(--accent)',
-      title: active.length + ' Active Investigations (' + fmt(totalTenants) + ' tenants)',
-      text: 'Covering ' + DATA.INV.length + ' total tracked rings. ' + DATA.INV.filter(i=>i.status==='complete').length + ' completed, ' + active.length + ' in progress.'
-    });
-  }
-
-  // Deletion plan callout
-  if (DATA.G5) {
-    const blocked = DATA.G5.filter(d => d.status.includes('Block Completed')).reduce((s,d) => s + d.count, 0);
-    if (blocked > 0) {
-      insights.push({
-        icon: '\ud83d\uddd1\ufe0f', color: '#22c55e',
-        title: fmt(blocked) + ' Tenants Ready for Deletion',
-        text: 'Block Completed tenants eligible for Phase 1 deletion starting May 2026. Estimated ' + fmtStorage(DATA.G5.filter(d=>d.status.includes('Block Completed')).reduce((s,d)=>s+d.storage_tb,0)) + ' reclamation.'
-      });
-    }
-  }
-
-  if (!insights.length) return;
-
-  let html = '<div class="card" style="margin-bottom: 16px;"><div class="card-title">\ud83d\udcca Insights & Signals</div>';
-  html += '<div style="display:grid; gap:10px;">';
-  insights.forEach(i => {
-    html += '<div style="display:flex; gap:10px; align-items:flex-start; padding:8px 12px; background:' + i.color + '08; border-radius:8px; border-left:3px solid ' + i.color + ';">';
-    html += '<span style="font-size:16px; flex-shrink:0;">' + i.icon + '</span>';
-    html += '<div><div style="font-size:12px; font-weight:700; color:var(--text);">' + i.title + '</div>';
-    html += '<div style="font-size:11px; color:var(--text-muted); margin-top:2px;">' + i.text + '</div></div>';
-    html += '</div>';
-  });
-  html += '</div></div>';
-  el.innerHTML = html;
-}
-
 
 function init() {
   if (DATA.lastUpdated) {
@@ -4020,7 +3973,6 @@ function init() {
   renderStatPills();
   // renderWhatsNew(); // Disabled for v1 launch — will populate from next report
   renderAlerts();
-  renderInsights();
   renderHeroTrend();
   renderFPHero();
   renderDailySource();
