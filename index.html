@@ -649,6 +649,35 @@ const DATA = {
     { action: 'ReadOnly',           succeeded: 4858, failed: 279, total: 5137, success_rate: 94.57 }
   ],
 
+  // B5: Delete reliability summary (Nov'25+)
+  B5: {
+    delete_attempts: 46,
+    succeeded: 46,
+    failed: 0,
+    pending: 0,
+    success_rate: 100,
+    failure_rate: 0,
+    pending_rate: 0
+  },
+
+  // B5_period: Delete reliability summary (this period)
+  B5_period: {
+    delete_attempts: 12,
+    succeeded: 12,
+    failed: 0,
+    pending: 0,
+    success_rate: 100,
+    failure_rate: 0,
+    pending_rate: 0
+  },
+
+  // B6: Delete action outcome breakdown (this period)
+  B6: [
+    { outcome: 'Succeeded', attempts: 12 },
+    { outcome: 'Pending', attempts: 0 },
+    { outcome: 'Failed (STATUS_0)', attempts: 0 }
+  ],
+
   // B4: Remediation by use case
   B4: [
     { usecase: 'ABUSE-READONLY-BLOCK-DELETE_15DAYS', first_action: 'Block',    tenants: 10181, storage_pb: 2.980  },
@@ -1286,6 +1315,31 @@ function renderExecReliability() {
   if (!el) return;
   if (!DATA.B3) return;
 
+  function getDeleteReliability(usePeriod) {
+    const src = usePeriod ? DATA.B5_period : DATA.B5;
+    if (src && typeof src.delete_attempts === 'number') {
+      return {
+        attempts: Number(src.delete_attempts || 0),
+        succeeded: Number(src.succeeded || 0),
+        failed: Number(src.failed || 0),
+        pending: Number(src.pending || 0),
+        successRate: Number(src.success_rate || 0)
+      };
+    }
+
+    const arr = usePeriod ? DATA.B3_period : DATA.B3;
+    if (!arr) return null;
+    const row = arr.find(d => (d.action || '').toLowerCase() === 'delete');
+    if (!row) return null;
+    return {
+      attempts: Number(row.total || 0),
+      succeeded: Number(row.succeeded || 0),
+      failed: Number(row.failed || 0),
+      pending: 0,
+      successRate: Number(row.success_rate || 0)
+    };
+  }
+
   const totalSucc = DATA.B3.reduce((s, d) => s + d.succeeded, 0);
   const totalAll  = DATA.B3.reduce((s, d) => s + d.total, 0);
   const rate = totalAll > 0 ? (totalSucc / totalAll * 100).toFixed(1) : 0;
@@ -1344,6 +1398,33 @@ function renderExecReliability() {
   });
   h += '</div>';
 
+  const delY = getDeleteReliability(false);
+  const delP = getDeleteReliability(true);
+  if (delY) {
+    h += '<div style="border-top:1px solid rgba(0,0,0,0.06);margin-top:4px;padding-top:4px;">';
+    h += '<div style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px;">Delete Reliability</div>';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+    h += '<div style="font-size:9px;color:var(--text);"><strong>Nov\'25+:</strong> ' + fmt(delY.attempts) + ' attempts, ' + fmt(delY.failed) + ' failed, ' + fmt(delY.pending) + ' pending (' + delY.successRate.toFixed(1) + '%)</div>';
+    if (delP) {
+      h += '<div style="font-size:9px;color:var(--text);"><strong>Period:</strong> ' + fmt(delP.attempts) + ' attempts, ' + fmt(delP.failed) + ' failed, ' + fmt(delP.pending) + ' pending (' + delP.successRate.toFixed(1) + '%)</div>';
+    } else {
+      h += '<div style="font-size:9px;color:var(--text-muted);">Period delete reliability unavailable</div>';
+    }
+    h += '</div>';
+
+    if (DATA.B6 && DATA.B6.length) {
+      const breakdown = DATA.B6
+        .filter(d => Number(d.attempts || 0) > 0)
+        .slice(0, 3)
+        .map(d => d.outcome + ': ' + fmt(Number(d.attempts || 0)))
+        .join(' · ');
+      if (breakdown) {
+        h += '<div style="font-size:8px;color:var(--text-muted);margin-top:3px;">Period outcome split: ' + breakdown + '</div>';
+      }
+    }
+    h += '</div>';
+  }
+
   el.innerHTML = h;
 }
 
@@ -1392,6 +1473,8 @@ function renderStatusBoxes() {
 
   function box(label, icon, color, pD, yD, compact) {
     const has = yD.count > 0;
+    const periodDelete = DATA.B5_period && typeof DATA.B5_period.delete_attempts === 'number' ? DATA.B5_period : null;
+    const ytdDelete = DATA.B5 && typeof DATA.B5.delete_attempts === 'number' ? DATA.B5 : null;
     let h = '<div style="border-radius:10px;border:1px solid ' + color + (has?'40':'18') + ';background:' + color + '08;padding:' + (compact?'10px 12px':'12px 14px') + ';">';
     h += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">';
     h += '<span style="font-size:' + (compact?'12px':'14px') + ';">' + icon + '</span>';
@@ -1407,6 +1490,13 @@ function renderStatusBoxes() {
     h += '</div>';
     // Tenants
     h += '<div style="font-size:10px;color:var(--text-muted);">' + (yD.count > 0 ? fmt(yD.count) + ' tenants' : '') + '</div>';
+    if (label === 'Deleted') {
+      if (periodDelete) {
+        h += '<div style="margin-top:6px;font-size:9px;color:var(--text-muted);">Period: ' + fmt(periodDelete.delete_attempts) + ' tries · ' + fmt(periodDelete.failed) + ' failed · ' + Number(periodDelete.success_rate || 0).toFixed(1) + '% success</div>';
+      } else if (ytdDelete) {
+        h += '<div style="margin-top:6px;font-size:9px;color:var(--text-muted);">Nov\'25+: ' + fmt(ytdDelete.delete_attempts) + ' tries · ' + fmt(ytdDelete.failed) + ' failed · ' + Number(ytdDelete.success_rate || 0).toFixed(1) + '% success</div>';
+      }
+    }
     h += '</div>';
     return h;
   }
@@ -1526,6 +1616,17 @@ function renderAlerts() {
       cards.push({ type: 'info', icon: ratio > 1 ? '\uD83D\uDCC8' : '\uD83D\uDCC9', title: fmt(c.tenants) + ' tenants (' + factor + 'x ' + dir + ' from ' + fmt(p.tenants) + ')', body: `This is a return to baseline after the R0 AI Agent batch detection.${explain} DS Model (${fmt(DATA.A2 ? DATA.A2.find(d => d.source.includes('DS'))?.tenants || 0 : 0)}) and Investigation (${fmt(DATA.A2 ? DATA.A2.find(d => d.source.includes('Investigation'))?.tenants || 0 : 0)}) are the active sources.` });
     }
   }
+
+  // 6. Tenant Deletion Pilot — permanent signal for the deletion phase
+  cards.push({
+    type: 'info',
+    icon: '\uD83D\uDDD1\uFE0F',
+    title: 'Tenant Deletion Pilot Underway',
+    body: 'Starting May 2026, we are piloting controlled deletion of blocked tenants in weekly batches. '
+        + 'May targets: ~1,200 tenants/week (low-storage, \u226498 GB). '
+        + 'June+: scaling to larger tenants. '
+        + 'Deletion metrics will appear in the remediation charts as the pipeline executes.'
+  });
 
   if (!cards.length) {
     cards.push({ type: 'success', icon: '\u2713', title: 'All Clear', body: 'No anomalies or actionable signals this reporting period.', metric: '' });
@@ -1699,6 +1800,46 @@ function renderHeroTrend() {
     const barBg = storageTB.map((_, i) => i === storageTB.length - 1 ? 'rgba(37,99,235,0.85)' : 'rgba(59,130,246,0.5)');
     const barBd = storageTB.map((_, i) => i === storageTB.length - 1 ? '#1d4ed8' : '#3b82f6');
 
+    const lastBar = storageTB[storageTB.length - 1];
+    const lastCum = cumulative[cumulative.length - 1];
+    const heroBoxPlugin = {
+      id: 'heroAnnotationBoxes',
+      afterDatasetsDraw(chart) {
+        const { ctx: c, chartArea: { left, right, top }, scales: { y, y1 } } = chart;
+        const meta0 = chart.getDatasetMeta(0); // bars
+        const meta1 = chart.getDatasetMeta(1); // cumulative line
+        const lastBarEl = meta0.data[meta0.data.length - 1];
+        const lastLineEl = meta1.data[meta1.data.length - 1];
+        if (!lastBarEl || !lastLineEl) return;
+        c.save();
+        const font = '700 10px Inter, system-ui, sans-serif';
+        c.font = font;
+        // Bar annotation (This Period)
+        const barLabel = fmtStorage(lastBar);
+        const barW = c.measureText(barLabel).width + 12;
+        const barH = 18;
+        const barX = lastBarEl.x - barW / 2;
+        const barY = y.getPixelForValue(lastBar) - barH - 6;
+        c.fillStyle = 'rgba(37,99,235,0.12)'; c.strokeStyle = '#2563eb';
+        c.lineWidth = 1; c.beginPath(); c.roundRect(barX, barY, barW, barH, 4); c.fill(); c.stroke();
+        c.fillStyle = '#1d4ed8'; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.fillText(barLabel, lastBarEl.x, barY + barH / 2);
+        // Cumulative annotation
+        const cumLabel = fmtStorage(lastCum);
+        const cumW = c.measureText(cumLabel).width + 12;
+        const cumH = 18;
+        const cumX = lastLineEl.x - cumW / 2;
+        let cumY = y1.getPixelForValue(lastCum) - cumH - 6;
+        // Avoid overlap with bar annotation
+        if (Math.abs(cumY - barY) < barH + 4) cumY = barY - cumH - 4;
+        c.fillStyle = 'rgba(34,197,94,0.12)'; c.strokeStyle = '#16a34a';
+        c.lineWidth = 1; c.beginPath(); c.roundRect(cumX, cumY, cumW, cumH, 4); c.fill(); c.stroke();
+        c.fillStyle = '#15803d'; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.fillText(cumLabel, lastLineEl.x, cumY + cumH / 2);
+        c.restore();
+      }
+    };
+
     chartInstances['hero-trend'] = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -1708,6 +1849,7 @@ function renderHeroTrend() {
           { label: 'Cumulative', data: cumulative, type: 'line', borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.06)', borderWidth: 2.5, pointRadius: cumulative.map((_, i) => i === cumulative.length - 1 ? 6 : 3), pointBackgroundColor: cumulative.map((_, i) => i === cumulative.length - 1 ? '#16a34a' : '#22c55e'), fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
         ]
       },
+      plugins: [heroBoxPlugin],
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
@@ -1792,6 +1934,44 @@ function renderFPHero() {
   const barBg = fpRates.map((_, i) => i === fpRates.length - 1 ? 'rgba(37,99,235,0.85)' : 'rgba(59,130,246,0.45)');
   const barBd = fpRates.map((_, i) => i === fpRates.length - 1 ? '#1d4ed8' : '#3b82f6');
 
+  const lastFP = fpRates[fpRates.length - 1];
+  const lastCumFP = cumFPRates[cumFPRates.length - 1];
+  const fpBoxPlugin = {
+    id: 'fpAnnotationBoxes',
+    afterDatasetsDraw(chart) {
+      const { ctx: c, scales: { y } } = chart;
+      const meta0 = chart.getDatasetMeta(0); // bars
+      const meta1 = chart.getDatasetMeta(1); // cumulative line
+      const lastBarEl = meta0.data[meta0.data.length - 1];
+      const lastLineEl = meta1.data[meta1.data.length - 1];
+      if (!lastBarEl || !lastLineEl) return;
+      c.save();
+      c.font = '700 10px Inter, system-ui, sans-serif';
+      // Bar annotation (Period FP Rate)
+      const barLabel = lastFP.toFixed(2) + '%';
+      const barW = c.measureText(barLabel).width + 12;
+      const barH = 18;
+      const barX = lastBarEl.x - barW / 2;
+      const barY = y.getPixelForValue(lastFP) - barH - 6;
+      c.fillStyle = 'rgba(37,99,235,0.12)'; c.strokeStyle = '#2563eb';
+      c.lineWidth = 1; c.beginPath(); c.roundRect(barX, barY, barW, barH, 4); c.fill(); c.stroke();
+      c.fillStyle = '#1d4ed8'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(barLabel, lastBarEl.x, barY + barH / 2);
+      // Cumulative annotation
+      const cumLabel = lastCumFP.toFixed(2) + '%';
+      const cumW = c.measureText(cumLabel).width + 12;
+      const cumH = 18;
+      const cumX = lastLineEl.x - cumW / 2;
+      let cumY = y.getPixelForValue(lastCumFP) - cumH - 6;
+      if (Math.abs(cumY - barY) < barH + 4) cumY = barY - cumH - 4;
+      c.fillStyle = 'rgba(245,158,11,0.12)'; c.strokeStyle = '#f59e0b';
+      c.lineWidth = 1; c.beginPath(); c.roundRect(cumX, cumY, cumW, cumH, 4); c.fill(); c.stroke();
+      c.fillStyle = '#b45309'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(cumLabel, lastLineEl.x, cumY + cumH / 2);
+      c.restore();
+    }
+  };
+
   chartInstances['fp-hero'] = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -1801,6 +1981,7 @@ function renderFPHero() {
         { label: "Nov'25+ Cumulative", data: cumFPRates, type: 'line', borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2.5, borderDash: [6, 3], pointRadius: cumFPRates.map((_, i) => i === cumFPRates.length - 1 ? 6 : 0), pointBackgroundColor: '#f59e0b', pointBorderColor: '#f59e0b', fill: false, tension: 0.3, yAxisID: 'y', order: 1 }
       ]
     },
+    plugins: [fpBoxPlugin],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
@@ -1850,7 +2031,17 @@ function renderSourceMix() {
   if (!el) return;
   const ctx = el.getContext('2d');
   const total = sources.reduce((s, d) => s + d.tenants, 0);
-  const totalStorage = sources.reduce((s, d) => s + (d.storage_tb || 0), 0);
+  let totalStorage = sources.reduce((s, d) => s + (d.storage_tb || 0), 0);
+
+  // Reconcile with C2b cumulative (authoritative) — scale proportionally if gap exists
+  if (DATA.C2b && DATA.C2b.length > 0) {
+    const c2bTotal = DATA.C2b.reduce((s, d) => s + (d.storage_tb || 0), 0);
+    if (c2bTotal > 0 && Math.abs(c2bTotal - totalStorage) > 1) {
+      const scale = c2bTotal / totalStorage;
+      sources.forEach(d => { d.storage_tb = (d.storage_tb || 0) * scale; });
+      totalStorage = c2bTotal;
+    }
+  }
 
   // Friendly labels for the legend
   const friendlyName = {
