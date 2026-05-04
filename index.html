@@ -1609,7 +1609,19 @@ const DATA = {
   ],
 
   // INV: Investigation registry (manually maintained)
-  INV: []
+  INV: [
+    { id: 'INV-001', name: 'TM9/TM10 Fraud Ring', status: 'complete', date: '2025-11-15', tenants: 715, storage_prov_tb: 24087, storage_used_tb: 0, remediation_pct: 100, priority: 'high', desc: 'Large-scale fraud ring using TM9/TM10 pattern', report: 'INV-001', updates: [{date:'2026-01-10',type:'complete',text:'All tenants blocked and deleted'}] },
+    { id: 'INV-002', name: '50-Tenant Cluster', status: 'complete', date: '2025-12-01', tenants: 50, storage_prov_tb: 5120, storage_used_tb: 0, remediation_pct: 100, priority: 'medium', desc: '50-tenant investigation cluster', report: 'INV-002', updates: [{date:'2026-02-15',type:'complete',text:'Fully remediated'}] },
+    { id: 'INV-003', name: '163-Tenant Cluster', status: 'complete', date: '2025-12-15', tenants: 163, storage_prov_tb: 16700, storage_used_tb: 0, remediation_pct: 100, priority: 'high', desc: '163-tenant bulk fraud cluster', report: 'INV-003', updates: [{date:'2026-02-28',type:'complete',text:'All tenants remediated'}] },
+    { id: 'INV-004', name: 'E5 Dev Ring', status: 'active', date: '2026-01-10', tenants: 134, storage_prov_tb: 13700, storage_used_tb: 820, remediation_pct: 75, priority: 'high', desc: 'E5 Developer SKU abuse ring exploiting dev quotas', report: 'INV-004', updates: [{date:'2026-04-20',type:'remediation',text:'75% blocked, monitoring remaining'}] },
+    { id: 'INV-005', name: 'ACGDB Ring', status: 'complete', date: '2026-01-20', tenants: 89, storage_prov_tb: 9100, storage_used_tb: 0, remediation_pct: 100, priority: 'medium', desc: 'ACGDB pattern fraud ring', report: 'INV-005', updates: [{date:'2026-03-15',type:'complete',text:'Ring fully disrupted'}] },
+    { id: 'INV-006', name: 'MistyCloud Ring', status: 'complete', date: '2026-02-01', tenants: 45, storage_prov_tb: 4600, storage_used_tb: 0, remediation_pct: 100, priority: 'medium', desc: 'MistyCloud infrastructure abuse', report: 'INV-006', updates: [{date:'2026-03-20',type:'complete',text:'Remediated and blocklisted'}] },
+    { id: 'INV-007', name: 'Procode Ring', status: 'active', date: '2026-02-10', tenants: 67, storage_prov_tb: 6860, storage_used_tb: 410, remediation_pct: 80, priority: 'medium', desc: 'Procode pattern abusing trial SKUs', report: 'INV-007', updates: [{date:'2026-04-25',type:'remediation',text:'80% remediated, 20% pending CELA review'}] },
+    { id: 'INV-008', name: 'EDU CN/VN Network', status: 'active', date: '2026-02-20', tenants: 1247, storage_prov_tb: 127600, storage_used_tb: 15200, remediation_pct: 60, priority: 'critical', desc: 'Large EDU fraud network from CN/VN origins', report: 'INV-008', updates: [{date:'2026-04-28',type:'remediation',text:'60% remediated, new sign-ups still arriving'},{date:'2026-04-15',type:'escalation',text:'Escalated to CELA for geo-blocking'}] },
+    { id: 'INV-009', name: 'Fraud Ring Consolidation', status: 'complete', date: '2026-03-01', tenants: 200, storage_prov_tb: 20480, storage_used_tb: 0, remediation_pct: 100, priority: 'medium', desc: 'Consolidated smaller rings under common infrastructure', report: 'INV-009', updates: [{date:'2026-04-01',type:'complete',text:'All sub-rings remediated'}] },
+    { id: 'INV-010', name: 'Archetype G At Scale', status: 'active', date: '2026-03-10', tenants: 44576, storage_prov_tb: 15770, storage_used_tb: 2100, remediation_pct: 95, priority: 'critical', ds_sourced: true, desc: 'R0 large batch detection - Archetype G pattern', report: 'INV-010', updates: [{date:'2026-04-30',type:'remediation',text:'95% processed, 5% in appeal window'}] },
+    { id: 'INV-016', name: 'China Network Abuse', status: 'active', date: '2026-03-25', tenants: 312, storage_prov_tb: 31900, storage_used_tb: 4800, remediation_pct: 40, priority: 'high', desc: 'Network abuse pattern from China-based actors', report: 'INV-016', updates: [{date:'2026-04-28',type:'remediation',text:'40% blocked, investigation ongoing'},{date:'2026-04-20',type:'rule',text:'New R5 signal added for pattern'}] }
+  ]
 };
 
 
@@ -1712,18 +1724,18 @@ function showPage(id) {
 }
 
 function fmt(n, decimals = 0) {
-  if (n === null || n === undefined) return 'ΓÇö';
+  if (n === null || n === undefined) return '—';
   return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
-function fmtPct(n) { return n === null || n === undefined ? 'ΓÇö' : n.toFixed(2) + '%'; }
+function fmtPct(n) { return n === null || n === undefined ? '—' : n.toFixed(2) + '%'; }
 function fmtUSD(n) {
-  if (!n) return 'ΓÇö';
+  if (!n) return '—';
   if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
   if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
   return '$' + n.toFixed(0);
 }
 function fmtStorage(tb) {
-  if (!tb && tb !== 0) return 'ΓÇö';
+  if (!tb && tb !== 0) return '—';
   if (tb >= 1024) return (tb / 1024).toFixed(2) + ' PB';
   return tb.toFixed(1) + ' TB';
 }
@@ -1733,8 +1745,8 @@ function momArrow(current, previous, invert = false) {
   const pct = ((current - previous) / previous * 100).toFixed(1);
   const isUp = pct > 0;
   const cls = invert ? (isUp ? 'down' : 'up') : (isUp ? 'up' : 'down');
-  if (Math.abs(pct) < 1) return '<span class="flat">ΓåÆ flat</span>';
-  return `<span class="${cls}">${isUp ? 'Γåæ' : 'Γåô'} ${Math.abs(pct)}% vs prev period</span>`;
+  if (Math.abs(pct) < 1) return '<span class="flat">→ flat</span>';
+  return `<span class="${cls}">${isUp ? '↑' : '↓'} ${Math.abs(pct)}% vs prev period</span>`;
 }
 
 function getRemediated(arr) {
@@ -1777,25 +1789,39 @@ function renderHeroKPIs() {
   const elYtd = document.getElementById('hero-storage-ytd');
   if (elYtd) elYtd.textContent = fmtStorage(authStorage);
 
-  // FP pills
-  if (DATA.C2b && DATA.C2b.length) {
-    const last = DATA.C2b[DATA.C2b.length - 1];
-    const fpRate = last.fp > 0 ? (last.fp / (last.tenants + last.fp) * 100) : 0;
-    const elFp = document.getElementById('hero-fp');
-    if (elFp) elFp.textContent = fmtPct(fpRate);
-    const elFpSub = document.getElementById('hero-fp-sub');
-    if (elFpSub) elFpSub.textContent = `${last.fp} FP / ${fmt(last.tenants + last.fp)} total`;
-  }
+  // FP pills — use A3c (authoritative FP by rule, cumulative Nov'25+)
+  if (DATA.A3c && DATA.A3c.length) {
+    const totalFP = DATA.A3c.reduce((s, r) => s + (r.fp || 0), 0);
+    const totalDecided = DATA.A3c.reduce((s, r) => s + (r.remediated || 0) + (r.fp || 0), 0);
+    const ytdRate = totalDecided > 0 ? (totalFP / totalDecided * 100) : 0;
+    
+    // YTD FP (Nov'25+)
+    const elFpYtd = document.getElementById('hero-fp-ytd');
+    if (elFpYtd) elFpYtd.textContent = fmtPct(ytdRate);
+    const elFpYtdCount = document.getElementById('hero-fp-ytd-count');
+    if (elFpYtdCount) elFpYtdCount.textContent = `${totalFP} FP / ${fmt(totalDecided)}`;
 
-  // YTD FP
-  if (DATA.C2b) {
+    // This period FP — use A4 if available (period-specific), else show YTD
+    let periodRate = ytdRate, periodFP = totalFP, periodTotal = totalDecided;
+    if (DATA.A4 && DATA.A4.length) {
+      periodFP = DATA.A4.reduce((s, r) => s + (r.fp || 0), 0);
+      const periodRem = DATA.A4.reduce((s, r) => s + (r.tenants || 0), 0);
+      periodTotal = periodRem + periodFP;
+      periodRate = periodTotal > 0 ? (periodFP / periodTotal * 100) : 0;
+    }
+    const elFp = document.getElementById('hero-fp');
+    if (elFp) elFp.textContent = fmtPct(periodRate);
+    const elFpSub = document.getElementById('hero-fp-sub');
+    if (elFpSub) elFpSub.textContent = `${periodFP} FP / ${fmt(periodTotal)} decided`;
+  } else if (DATA.C2b && DATA.C2b.length) {
+    // Fallback to C2b
     const totalFP = DATA.C2b.reduce((s, r) => s + (r.fp || 0), 0);
     const totalRem = DATA.C2b.reduce((s, r) => s + r.tenants, 0);
     const ytdRate = totalRem + totalFP > 0 ? (totalFP / (totalRem + totalFP) * 100) : 0;
     const elFpYtd = document.getElementById('hero-fp-ytd');
     if (elFpYtd) elFpYtd.textContent = fmtPct(ytdRate);
-    const elFpYtdCount = document.getElementById('hero-fp-ytd-count');
-    if (elFpYtdCount) elFpYtdCount.textContent = `${totalFP} FP / ${fmt(totalRem + totalFP)}`;
+    const elFp = document.getElementById('hero-fp');
+    if (elFp) elFp.textContent = fmtPct(ytdRate);
   }
 }
 
@@ -1869,7 +1895,7 @@ function renderStatusBoxes() {
     html += `</div>`;
   });
 
-  // FP exit ΓÇö same flex sizing as other boxes
+  // FP exit — same flex sizing as other boxes
   function fpMerge(lookup) {
     let count = 0, storage = 0;
     ['False Positive', 'FP Reported'].forEach(k => { const d = lookup[k]; if (d) { count += d.count; storage += d.storage_tb; } });
@@ -1899,7 +1925,7 @@ function renderAlerts() {
   const c = DATA.A1 ? DATA.A1.current : null;
   const p = DATA.A1 ? DATA.A1.previous : null;
 
-  // 1. Fraud rings from C4 ΓÇö deduplicate by org name, show only multi-tenant clusters
+  // 1. Fraud rings from C4 — deduplicate by org name, show only multi-tenant clusters
   if (DATA.C4 && DATA.C4.length > 0) {
     const orgs = {};
     DATA.C4.forEach(d => {
@@ -1920,7 +1946,7 @@ function renderAlerts() {
     }
   }
 
-  // 2. Detection source breakdown ΓÇö show how this period's detections split across sources
+  // 2. Detection source breakdown — show how this period's detections split across sources
   if (DATA.A2 && c && c.tenants > 20) {
     const sources = DATA.A2.map(d => `<strong>${d.source}</strong>: ${fmt(d.tenants)} tenants, ${fmtStorage(d.storage_tb)}`);
     const dsRow = DATA.A2.find(d => d.source.includes('DS'));
@@ -1937,7 +1963,7 @@ function renderAlerts() {
     }
   }
 
-  // Pipeline failures ΓÇö only core actions (Block/ReadOnly/Delete), only when critically broken (>20% failure)
+  // Pipeline failures — only core actions (Block/ReadOnly/Delete), only when critically broken (>20% failure)
   if (DATA.B3) {
     const coreActions = ['Block', 'ReadOnly', 'Delete'];
     const broken = DATA.B3.filter(d => coreActions.includes(d.action) && d.success_rate < 80 && d.total >= 10);
@@ -1947,7 +1973,7 @@ function renderAlerts() {
     }
   }
 
-  // 3. Backlog stall ΓÇö only when avg dwell is alarming
+  // 3. Backlog stall — only when avg dwell is alarming
   if (DATA.D1) {
     const stale = DATA.D1.filter(d => d.avg_days > 180 && d.count > 50);
     if (stale.length > 0) {
@@ -1957,7 +1983,7 @@ function renderAlerts() {
     }
   }
 
-  // 4. Storage per tenant anomaly ΓÇö flag when avg storage this period is notably high
+  // 4. Storage per tenant anomaly — flag when avg storage this period is notably high
   if (c && c.tenants > 0) {
     const avgTB = c.storage_tb / c.tenants;
     if (avgTB > 10) {
@@ -1969,7 +1995,7 @@ function renderAlerts() {
     }
   }
 
-  // 5. Detection volume context ΓÇö only when swing is dramatic and explain WHY
+  // 5. Detection volume context — only when swing is dramatic and explain WHY
   if (c && p && p.tenants > 0) {
     const ratio = c.tenants / p.tenants;
     if (ratio < 0.1 || ratio > 10) {
@@ -1984,7 +2010,7 @@ function renderAlerts() {
     }
   }
 
-  // 6. ReadOnly max dwell outlier ΓÇö flag tenants stuck in ReadOnly for years
+  // 6. ReadOnly max dwell outlier — flag tenants stuck in ReadOnly for years
   if (DATA.B2) {
     const roData = DATA.B2.find(d => d.action === 'ReadOnly');
     if (roData && roData.max_days > 365) {
@@ -2013,13 +2039,13 @@ function renderStatPills() {
   if (!container) return;
   const pills = [];
 
-  // Pipeline Reliability % (from B3 ΓÇö weighted success rate across all actions, YTD)
+  // Pipeline Reliability % (from B3 — weighted success rate across all actions, YTD)
   if (DATA.B3) {
     const totalSucc = DATA.B3.reduce((s, d) => s + d.succeeded, 0);
     const totalAll = DATA.B3.reduce((s, d) => s + d.total, 0);
     const rate = totalAll > 0 ? (totalSucc / totalAll * 100).toFixed(1) : 0;
     const detail = DATA.B3.map(d => d.action + ' ' + d.success_rate.toFixed(1) + '%').join(', ');
-    pills.push({ icon: 'Γ£à', color: 'rgba(34,197,94,0.15)', val: rate + '%', lbl: 'Pipeline Reliability (Nov\'25+)',
+    pills.push({ icon: '✅', color: 'rgba(34,197,94,0.15)', val: rate + '%', lbl: 'Pipeline Reliability (Nov\'25+)',
       valColor: rate > 95 ? 'var(--green)' : rate > 90 ? 'var(--amber)' : 'var(--red)',
       tip: 'Weighted success rate of all remediation actions since Nov\u201925. ' + fmt(totalSucc) + ' succeeded of ' + fmt(totalAll) + ' attempted. Breakdown: ' + detail + '.' });
   }
@@ -3800,6 +3826,64 @@ function renderYTDHealth(ytd) {
 }
 
 // ============================================================================
+// EXEC SUMMARY PANEL RENDERERS
+// ============================================================================
+
+function renderExecReliability() {
+  const el = document.getElementById('exec-reliability-content');
+  if (!el || !DATA.B3) return;
+  const totalSucc = DATA.B3.reduce((s, d) => s + d.succeeded, 0);
+  const totalAll = DATA.B3.reduce((s, d) => s + d.total, 0);
+  const rate = totalAll > 0 ? (totalSucc / totalAll * 100).toFixed(1) : 0;
+  const color = rate > 95 ? 'var(--green)' : rate > 90 ? 'var(--amber)' : 'var(--red)';
+  let h = `<div style="font-size:22px; font-weight:800; color:${color};">${rate}%</div>`;
+  h += `<div style="font-size:9px; color:var(--text-muted); margin-top:2px;">`;
+  h += DATA.B3.filter(d => ['Block','ReadOnly','Delete'].includes(d.action))
+    .map(d => `${d.action} ${d.success_rate.toFixed(0)}%`).join(' · ');
+  h += `</div>`;
+  el.innerHTML = h;
+}
+
+function renderExecInvestigations() {
+  const el = document.getElementById('exec-investigations-content');
+  if (!el) return;
+  if (!DATA.INV || DATA.INV.length === 0) {
+    el.innerHTML = '<span style="font-size:10px;color:var(--text-muted);">No active investigations</span>';
+    return;
+  }
+  const active = DATA.INV.filter(i => i.status === 'active' || i.status === 'open');
+  let h = `<div style="font-size:18px; font-weight:800; color:var(--accent);">${active.length}</div>`;
+  h += `<div style="font-size:9px; color:var(--text-muted);">${DATA.INV.length} total tracked</div>`;
+  el.innerHTML = h;
+}
+
+function renderPipelineSnapshot() {
+  const el = document.getElementById('pipeline-ro-block');
+  if (!el) return;
+  if (!DATA.G4 && !DATA.G5) {
+    el.innerHTML = '<span style="font-size:10px;color:var(--text-muted);">Run G4/G5 queries</span>';
+    return;
+  }
+  // Show key pipeline metrics from G5 (YTD) 
+  const stats = {};
+  (DATA.G5 || []).forEach(d => { stats[d.status] = d; });
+  const blocked = stats['Block Completed'] || stats['Block In-Progress'] || {count:0, storage_tb:0};
+  const deleted = stats['Delete Completed'] || stats['Delete In-Progress'] || {count:0, storage_tb:0};
+  const ro = stats['ReadOnly Completed'] || stats['ReadOnly In-Progress'] || {count:0, storage_tb:0};
+  
+  function pill(label, count, storage, color) {
+    return `<div style="background:${color}10; border:1px solid ${color}30; border-radius:8px; padding:8px; text-align:center;">
+      <div style="font-size:18px; font-weight:800; color:${color};">${fmt(count)}</div>
+      <div style="font-size:9px; color:var(--text-muted);">${label}</div>
+      <div style="font-size:9px; color:${color};">${fmtStorage(storage)}</div>
+    </div>`;
+  }
+  el.innerHTML = pill('Blocked', blocked.count||0, blocked.storage_tb||0, '#ef4444') +
+    pill('ReadOnly', ro.count||0, ro.storage_tb||0, '#eab308') +
+    pill('Deleted', deleted.count||0, deleted.storage_tb||0, '#22c55e');
+}
+
+// ============================================================================
 // INIT — Call all renderers
 // ============================================================================
 
@@ -3814,6 +3898,9 @@ function init() {
   const ytd = computeYTD();
   
   renderHeroKPIs();
+  renderExecReliability();
+  renderExecInvestigations();
+  renderPipelineSnapshot();
   if (ytd) renderYTDExec(ytd);
   renderStaleWarning();
   renderStatPills();
