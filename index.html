@@ -1703,6 +1703,395 @@ function toggleSmoothing(on) {
     renderDailySource();
 }
 
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function fmt(n, decimals = 0) {
+  if (n === null || n === undefined) return 'ΓÇö';
+  return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function fmtPct(n) { return n === null || n === undefined ? 'ΓÇö' : n.toFixed(2) + '%'; }
+function fmtUSD(n) {
+  if (!n) return 'ΓÇö';
+  if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+  return '$' + n.toFixed(0);
+}
+function fmtStorage(tb) {
+  if (!tb && tb !== 0) return 'ΓÇö';
+  if (tb >= 1024) return (tb / 1024).toFixed(2) + ' PB';
+  return tb.toFixed(1) + ' TB';
+}
+
+function momArrow(current, previous, invert = false) {
+  if (!current || !previous || previous === 0) return '';
+  const pct = ((current - previous) / previous * 100).toFixed(1);
+  const isUp = pct > 0;
+  const cls = invert ? (isUp ? 'down' : 'up') : (isUp ? 'up' : 'down');
+  if (Math.abs(pct) < 1) return '<span class="flat">ΓåÆ flat</span>';
+  return `<span class="${cls}">${isUp ? 'Γåæ' : 'Γåô'} ${Math.abs(pct)}% vs prev period</span>`;
+}
+
+function getRemediated(arr) {
+  if (!arr || !arr.length) return 0;
+  return arr.reduce((s, r) => s + (r.storage_tb || 0), 0);
+}
+
+function getAuthoritativeStorage() {
+  // C2b cumulative is the authoritative total storage remediated
+  if (DATA.C2b && DATA.C2b.length) {
+    const last = DATA.C2b[DATA.C2b.length - 1];
+    return last.cumulative_tb || 0;
+  }
+  if (DATA.C2 && DATA.C2.length) {
+    return DATA.C2.reduce((s, r) => s + (r.storage_tb || 0), 0);
+  }
+  return 0;
+}
+
+function renderHeroKPIs() {
+  if (!DATA.A1) return;
+  const c = DATA.A1.current, p = DATA.A1.previous;
+
+  // Period range label
+  if (DATA.periodStart && DATA.periodEnd) {
+    const el = document.getElementById('period-range-label');
+    if (el) el.textContent = `${DATA.periodStart} ΓåÆ ${DATA.periodEnd}`;
+  }
+
+  document.getElementById('hero-tenants').textContent = fmt(c.tenants);
+  document.getElementById('hero-tenants-mom').innerHTML = momArrow(c.tenants, p.tenants);
+
+  document.getElementById('hero-storage').textContent = fmtStorage(c.storage_tb);
+  document.getElementById('hero-storage-mom').innerHTML = momArrow(c.storage_tb, p.storage_tb);
+
+  document.getElementById('hero-fp').textContent = fmtPct(c.fp_rate);
+  document.getElementById('hero-fp-mom').innerHTML = momArrow(c.fp_rate, p.fp_rate, true);
+
+  // Status breakdown sub-boxes
+  renderStatusBoxes();
+}
+
+function renderStatusBoxes() {
+  // Consolidated 5-stage pipeline + FP exit: left-to-right enforcement journey
+  const stages = [
+    { keys: ['Identified', 'Other'], label: 'Identified', color: '#64748b', num: 1 },
+    { keys: ['In Remediation'], label: 'Queued', color: '#f97316', num: 2 },
+    { keys: ['ReadOnly In-Progress', 'ReadOnly Completed'], label: 'ReadOnly', color: '#eab308', num: 3 },
+    { keys: ['Block In-Progress', 'Block Completed'], label: 'Blocked', color: '#ef4444', num: 4 },
+    { keys: ['Delete In-Progress', 'Delete Completed'], label: 'Deleted', color: '#22c55e', num: 5 }
+  ];
+
+  const el = document.getElementById('combined-pipeline');
+  if (!el) return;
+  if (!DATA.G4 && !DATA.G5) {
+    el.innerHTML = '<span style="color: var(--text-muted); font-size: 12px;">Run queries G4/G5 to populate pipeline</span>';
+    return;
+  }
+
+  const pLookup = {}, yLookup = {};
+  if (DATA.G4) DATA.G4.forEach(d => { pLookup[d.status] = d; });
+  if (DATA.G5) DATA.G5.forEach(d => { yLookup[d.status] = d; });
+
+  function getMerged(lookup, keys) {
+    let count = 0, storage = 0;
+    keys.forEach(k => { const d = lookup[k]; if (d) { count += d.count; storage += d.storage_tb; } });
+    return { count, storage };
+  }
+
+  function renderBox(label, color, p, y, opts = {}) {
+    const hasData = p.count > 0 || y.count > 0;
+    const dashed = opts.dashed || false;
+    const num = opts.num;
+    let h = '';
+    h += `<div style="flex:1; min-width:0; padding:10px 8px; border-radius:10px; border:1px ${dashed ? 'dashed' : 'solid'} ${color}${hasData ? '40' : '18'}; background:${color}${hasData ? '0c' : '05'}; opacity:${hasData ? 1 : 0.4}; display:flex; flex-direction:column;">`;
+    // Header
+    h += `<div style="display:flex; align-items:center; gap:5px; margin-bottom:6px;">`;
+    if (num) h += `<span style="width:16px; height:16px; border-radius:50%; background:${color}; color:white; font-size:8px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">${num}</span>`;
+    h += `<span style="font-size:10px; font-weight:700; color:${color}; letter-spacing:0.3px; text-transform:uppercase;">${label}</span>`;
+    h += `</div>`;
+    // Period row
+    h += `<div style="display:flex; align-items:baseline; gap:4px; margin-bottom:2px;">`;
+    h += `<span style="width:5px;height:5px;border-radius:50%;background:#2563eb;display:inline-block;flex-shrink:0;margin-top:3px;"></span>`;
+    h += `<span style="font-size:15px;font-weight:700;color:#1e293b;line-height:1.1;">${p.count > 0 ? fmt(p.count) : '\u2014'}</span>`;
+    h += `<span style="font-size:9px;color:var(--text-muted);">${p.count > 0 ? fmtStorage(p.storage) : ''}</span>`;
+    h += `</div>`;
+    // YTD row
+    h += `<div style="display:flex; align-items:baseline; gap:4px;">`;
+    h += `<span style="width:5px;height:5px;border-radius:50%;background:var(--orange);display:inline-block;flex-shrink:0;margin-top:3px;"></span>`;
+    h += `<span style="font-size:15px;font-weight:700;color:var(--orange);line-height:1.1;">${y.count > 0 ? fmt(y.count) : '\u2014'}</span>`;
+    h += `<span style="font-size:9px;color:var(--text-muted);">${y.count > 0 ? fmtStorage(y.storage) : ''}</span>`;
+    h += `</div>`;
+    h += `</div>`;
+    return h;
+  }
+
+  function arrow(dashed) {
+    const dash = dashed ? ' stroke-dasharray="3 3"' : '';
+    return `<div style="display:flex; align-items:center; flex-shrink:0; padding:0 2px;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M10 4l4 4-4 4" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"${dash}/></svg></div>`;
+  }
+
+  let html = '<div style="display:flex; align-items:stretch; gap:0; overflow-x:auto;">';
+
+  stages.forEach((stage, i) => {
+    const p = getMerged(pLookup, stage.keys);
+    const y = getMerged(yLookup, stage.keys);
+    html += `<div style="display:flex; align-items:stretch; flex:1; min-width:0;">`;
+    html += renderBox(stage.label, stage.color, p, y, { num: stage.num });
+    if (i < stages.length - 1) html += arrow(false);
+    html += `</div>`;
+  });
+
+  // FP exit ΓÇö same flex sizing as other boxes
+  function fpMerge(lookup) {
+    let count = 0, storage = 0;
+    ['False Positive', 'FP Reported'].forEach(k => { const d = lookup[k]; if (d) { count += d.count; storage += d.storage_tb; } });
+    return { count, storage };
+  }
+  html += arrow(true);
+  html += `<div style="display:flex; align-items:stretch; flex:1; min-width:0;">`;
+  html += renderBox('FP Exit', '#ec4899', fpMerge(pLookup), fpMerge(yLookup), { dashed: true });
+  html += `</div>`;
+
+  html += '</div>';
+
+  // Legend
+  html += `<div style="display:flex; gap:16px; font-size:10px; margin-top:8px;">`;
+  html += `<span style="display:flex;align-items:center;gap:4px;"><span style="width:5px;height:5px;border-radius:50%;background:#2563eb;display:inline-block;"></span><span style="color:var(--text-muted);">This Period</span></span>`;
+  html += `<span style="display:flex;align-items:center;gap:4px;"><span style="width:5px;height:5px;border-radius:50%;background:var(--orange);display:inline-block;"></span><span style="color:var(--orange);">Nov\u201925\u2192Now</span></span>`;
+  html += `</div>`;
+
+  el.innerHTML = html;
+}
+
+function renderAlerts() {
+  const container = document.getElementById('alerts-container');
+  if (!DATA.A1 && !DATA.C4) return;
+
+  const cards = [];
+  const c = DATA.A1 ? DATA.A1.current : null;
+  const p = DATA.A1 ? DATA.A1.previous : null;
+
+  // 1. Fraud rings from C4 ΓÇö deduplicate by org name, show only multi-tenant clusters
+  if (DATA.C4 && DATA.C4.length > 0) {
+    const orgs = {};
+    DATA.C4.forEach(d => {
+      if (!orgs[d.name]) orgs[d.name] = { count: 0, storage: 0, countries: new Set(), skus: new Set() };
+      orgs[d.name].count++;
+      orgs[d.name].storage += d.storage_tb;
+      orgs[d.name].countries.add(d.country);
+      orgs[d.name].skus.add(d.sku);
+    });
+    const rings = Object.entries(orgs).filter(([, o]) => o.count >= 3).sort((a, b) => b[1].storage - a[1].storage);
+    if (rings.length > 0) {
+      const body = rings.slice(0, 3).map(([name, o]) => {
+        return `<strong>${name}</strong>: ${o.count} tenants, ${fmtStorage(o.storage)}, ${[...o.countries].join('/')} (${[...o.skus].join(', ')})`;
+      }).join('<br>');
+      const totalRingTenants = rings.reduce((s, [, o]) => s + o.count, 0);
+      const totalRingStorage = rings.reduce((s, [, o]) => s + o.storage, 0);
+      cards.push({ type: 'critical', icon: '\uD83D\uDEA8', title: rings.length + ' Fraud Ring' + (rings.length > 1 ? 's' : '') + ': ' + totalRingTenants + ' tenants, ' + fmtStorage(totalRingStorage), body: body });
+    }
+  }
+
+  // 2. Detection source breakdown ΓÇö show how this period's detections split across sources
+  if (DATA.A2 && c && c.tenants > 20) {
+    const sources = DATA.A2.map(d => `<strong>${d.source}</strong>: ${fmt(d.tenants)} tenants, ${fmtStorage(d.storage_tb)}`);
+    const dsRow = DATA.A2.find(d => d.source.includes('DS'));
+    const invRow = DATA.A2.find(d => d.source.includes('Investigation'));
+    const rulesRow = DATA.A2.find(d => d.source.includes('Rules'));
+    // Only surface if there's something interesting to call out
+    const dsPct = dsRow ? (dsRow.tenants / c.tenants * 100) : 0;
+    const invPct = invRow ? (invRow.tenants / c.tenants * 100) : 0;
+    if (dsPct > 60 || invPct > 30) {
+      let headline = '';
+      if (dsPct > 60) headline = 'DS Model drives ' + dsPct.toFixed(0) + '% of detections';
+      else if (invPct > 30) headline = 'Investigations account for ' + invPct.toFixed(0) + '% of detections';
+      cards.push({ type: 'info', icon: '\uD83D\uDCE1', title: headline, body: sources.join('<br>') });
+    }
+  }
+
+  // Pipeline failures ΓÇö only core actions (Block/ReadOnly/Delete), only when critically broken (>20% failure)
+  if (DATA.B3) {
+    const coreActions = ['Block', 'ReadOnly', 'Delete'];
+    const broken = DATA.B3.filter(d => coreActions.includes(d.action) && d.success_rate < 80 && d.total >= 10);
+    if (broken.length > 0) {
+      const body = broken.map(d => `<strong>${d.action}</strong>: ${d.success_rate.toFixed(1)}% success (${fmt(d.failed)} of ${fmt(d.total)} failed)`).join('<br>');
+      cards.push({ type: 'critical', icon: '\u26A0\uFE0F', title: 'Core remediation failing: ' + broken.map(d => d.action).join(', '), body: body });
+    }
+  }
+
+  // 3. Backlog stall ΓÇö only when avg dwell is alarming
+  if (DATA.D1) {
+    const stale = DATA.D1.filter(d => d.avg_days > 180 && d.count > 50);
+    if (stale.length > 0) {
+      const worst = stale.sort((a, b) => b.avg_days - a.avg_days)[0];
+      const body = stale.map(d => `<strong>${d.stage}</strong>: ${fmt(d.count)} tenants, avg ${fmt(d.avg_days)} days, ${fmtStorage(d.storage_tb)}`).join('<br>');
+      cards.push({ type: 'warning', icon: '\u23F3', title: fmt(worst.count) + ' tenants stuck ' + Math.round(worst.avg_days / 30) + '+ months at ' + worst.stage.split('(')[0].trim(), body: body + '<br><span style="color:var(--text-muted);">These tenants predate Nov\u201925 pipeline. Review for manual escalation or batch-move.</span>' });
+    }
+  }
+
+  // 4. Storage per tenant anomaly ΓÇö flag when avg storage this period is notably high
+  if (c && c.tenants > 0) {
+    const avgTB = c.storage_tb / c.tenants;
+    if (avgTB > 10) {
+      const topSource = DATA.A2 ? DATA.A2.reduce((best, d) => d.storage_tb > best.storage_tb ? d : best, DATA.A2[0]) : null;
+      const body = `Average <strong>${avgTB.toFixed(1)} TB/tenant</strong> this period (${fmtStorage(c.storage_tb)} across ${fmt(c.tenants)} tenants).`
+        + (topSource ? ` Driven by <strong>${topSource.source}</strong> (${fmtStorage(topSource.storage_tb)}, ${fmt(topSource.tenants)} tenants).` : '')
+        + (DATA.C4 ? `<br>Top offender: <strong>${DATA.C4[0].name}</strong> (${DATA.C4[0].country}) at ${fmtStorage(DATA.C4[0].storage_tb)}.` : '');
+      cards.push({ type: 'warning', icon: '\uD83D\uDCC0', title: 'High storage density: ' + avgTB.toFixed(0) + ' TB/tenant avg', body: body });
+    }
+  }
+
+  // 5. Detection volume context ΓÇö only when swing is dramatic and explain WHY
+  if (c && p && p.tenants > 0) {
+    const ratio = c.tenants / p.tenants;
+    if (ratio < 0.1 || ratio > 10) {
+      const dir = ratio > 1 ? 'up' : 'down';
+      const factor = ratio > 1 ? ratio.toFixed(0) : (1/ratio).toFixed(0);
+      let explain = '';
+      if (DATA.A2 && ratio < 0.1) {
+        const rulesDrop = DATA.A2.find(d => d.source.includes('Rules'));
+        explain = rulesDrop && rulesDrop.tenants < 50 ? ' Rule-based detections at <strong>' + fmt(rulesDrop.tenants) + '</strong> \u2014 last period\u2019s R0 batch (' + fmt(p.tenants) + ') was a one-time AI Agent sweep.' : '';
+      }
+      cards.push({ type: 'info', icon: ratio > 1 ? '\uD83D\uDCC8' : '\uD83D\uDCC9', title: fmt(c.tenants) + ' tenants (' + factor + 'x ' + dir + ' from ' + fmt(p.tenants) + ')', body: `This is a return to baseline after the R0 AI Agent batch detection.${explain} DS Model (${fmt(DATA.A2 ? DATA.A2.find(d => d.source.includes('DS'))?.tenants || 0 : 0)}) and Investigation (${fmt(DATA.A2 ? DATA.A2.find(d => d.source.includes('Investigation'))?.tenants || 0 : 0)}) are the active sources.` });
+    }
+  }
+
+  // 6. ReadOnly max dwell outlier ΓÇö flag tenants stuck in ReadOnly for years
+  if (DATA.B2) {
+    const roData = DATA.B2.find(d => d.action === 'ReadOnly');
+    if (roData && roData.max_days > 365) {
+      cards.push({ type: 'info', icon: '\uD83D\uDD12', title: 'ReadOnly max dwell: ' + fmt(roData.max_days) + ' days (' + (roData.max_days / 365).toFixed(1) + ' yrs)', body: `Some tenants have been in ReadOnly for over ${Math.floor(roData.max_days / 365)} years without progressing to Block. Avg is ${fmt(roData.avg_days)} days across ${fmt(roData.tenants)} tenants. Consider batch escalation.` });
+    }
+  }
+
+  if (!cards.length) {
+    cards.push({ type: 'success', icon: '\u2713', title: 'All Clear', body: 'No anomalies or actionable signals this reporting period.', metric: '' });
+  }
+
+  container.innerHTML = cards.map(c => `
+    <div class="insight-card ${c.type}">
+      <div class="ic-header">
+        <div class="ic-icon">${c.icon}</div>
+        <div class="ic-title">${c.title}</div>
+      </div>
+      <div class="ic-body">${c.body}</div>
+      ${c.metric ? `<div class="ic-metric">${c.metric}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderStatPills() {
+  const container = document.getElementById('stat-pills-container');
+  if (!container) return;
+  const pills = [];
+
+  // Pipeline Reliability % (from B3 ΓÇö weighted success rate across all actions, YTD)
+  if (DATA.B3) {
+    const totalSucc = DATA.B3.reduce((s, d) => s + d.succeeded, 0);
+    const totalAll = DATA.B3.reduce((s, d) => s + d.total, 0);
+    const rate = totalAll > 0 ? (totalSucc / totalAll * 100).toFixed(1) : 0;
+    const detail = DATA.B3.map(d => d.action + ' ' + d.success_rate.toFixed(1) + '%').join(', ');
+    pills.push({ icon: 'Γ£à', color: 'rgba(34,197,94,0.15)', val: rate + '%', lbl: 'Pipeline Reliability (Nov\'25+)',
+      valColor: rate > 95 ? 'var(--green)' : rate > 90 ? 'var(--amber)' : 'var(--red)',
+      tip: 'Weighted success rate of all remediation actions since Nov\u201925. ' + fmt(totalSucc) + ' succeeded of ' + fmt(totalAll) + ' attempted. Breakdown: ' + detail + '.' });
+  }
+
+  // Active investigation count + storage
+  if (DATA.INV) {
+    const active = DATA.INV.filter(i => i.status !== 'complete');
+    const storage = active.reduce((s, i) => s + (i.storage_used_tb || 0), 0);
+    pills.push({ icon: '≡ƒöì', color: 'rgba(168,85,247,0.15)', val: fmtStorage(storage), lbl: active.length + ' Active Investigations', valColor: 'var(--purple)' });
+  }
+
+  // All-time impact
+  if (DATA.F1) {
+    pills.push({ icon: '≡ƒÄ»', color: 'rgba(6,182,212,0.15)', val: fmt(DATA.F1.total_identified), lbl: 'All-Time Detected', valColor: 'var(--cyan)' });
+  }
+
+  container.innerHTML = pills.map(p => `
+    <div class="stat-pill">
+      <div class="sp-icon" style="background: ${p.color};">${p.icon}</div>
+      <div>
+        <div class="sp-val" style="color: ${p.valColor};">${p.val}</div>
+        <div class="sp-lbl">${p.tip ? `<span class="tip">${p.lbl}<span class="tip-icon">?</span><span class="tip-text">${p.tip}</span></span>` : p.lbl}</div>
+      </div>
+    </div>
+  `).join('');
+}
+function renderCumulativeChart() {
+  if (!DATA.A4) return;
+  destroyChart('cumulative');
+  const ctx = document.getElementById('chart-cumulative').getContext('2d');
+  // Aggregate A4 biweekly detection data into monthly buckets (matches hero card source)
+  const cutoff = '2025-10-31';
+  const monthly = {};
+  DATA.A4.filter(d => d.period_start >= cutoff).forEach(d => {
+    const mo = d.period_start.substring(0, 7); // YYYY-MM from period_start
+    if (!monthly[mo]) monthly[mo] = 0;
+    monthly[mo] += d.storage_tb;
+  });
+  const months = Object.keys(monthly).sort();
+  const vals = months.map(m => monthly[m]);
+  // Cumulative from Nov'25 start
+  let runningTotal = 0;
+  const cumFromNov = vals.map(v => { runningTotal += v; return runningTotal; });
+  chartInstances['cumulative'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        {
+          label: 'Monthly Flagged',
+          data: vals,
+          backgroundColor: 'rgba(59,130,246,0.6)',
+          borderColor: colors.blue,
+          borderWidth: 1,
+          borderRadius: 4,
+          yAxisID: 'y',
+          order: 2
+        },
+        {
+          label: 'Cumulative (Nov\u201925+)',
+          data: cumFromNov,
+          type: 'line',
+          borderColor: colors.green,
+          backgroundColor: 'rgba(34,197,94,0.08)',
+          borderWidth: 2.5,
+          pointRadius: 3,
+          pointBackgroundColor: colors.green,
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y1',
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 16 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return ctx.dataset.label + ': ' + fmtStorage(ctx.parsed.y);
+            }
+          }
+        }
+      },
+      scales: {
+        y:  { position: 'left',  title: { display: true, text: 'Monthly Flagged' }, ticks: { callback: v => fmtStorage(v) }, beginAtZero: true },
+        y1: { position: 'right', title: { display: true, text: 'Cumulative Total' },   ticks: { callback: v => fmtStorage(v) }, beginAtZero: true, grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+}
+
 function renderHeroTrend() {
   // Prefer biweekly C2b data; fall back to monthly C2
   const useC2b = DATA.C2b && DATA.C2b.length > 0;
