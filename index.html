@@ -1806,15 +1806,14 @@ function renderHeroKPIs() {
     const elFpYtd = document.getElementById('hero-fp-ytd');
     if (elFpYtd) elFpYtd.textContent = fmtPct(ytdRate);
     const elFpYtdCount = document.getElementById('hero-fp-ytd-count');
-    if (elFpYtdCount) elFpYtdCount.textContent = totalFP + ' FP / ' + fmt(totalDecided) + ' decided';
+    if (elFpYtdCount) elFpYtdCount.textContent = fmt(totalFP) + ' FP / ' + fmt(totalRem) + ' remediated';
 
     // This Period pill — from A4 period_num=0
     let periodRate = 0, periodLabel = '0 FP this period';
     if (DATA.A4 && DATA.A4.length) {
       const curr = DATA.A4.find(r => r.period_num === 0) || DATA.A4[0];
       periodRate = curr.fp_rate || 0;
-      const decided = curr.tenants + (curr.fp || 0);
-      periodLabel = (curr.fp || 0) + ' FP / ' + fmt(decided) + ' decided';
+      periodLabel = (curr.fp || 0) + ' FP / ' + fmt(curr.tenants) + ' remediated';
     }
     const elFp = document.getElementById('hero-fp');
     if (elFp) elFp.textContent = fmtPct(periodRate);
@@ -2026,7 +2025,8 @@ function renderAlerts() {
     const totalDecided = DATA.A3c.reduce((s,r) => s + r.remediated + r.fp, 0);
     const rate = (totalFP / totalDecided * 100).toFixed(2);
     const worstRule = DATA.A3c.reduce((w, r) => r.fp_rate > (w.fp_rate||0) ? r : w, {});
-    cards.push({ type: rate < 3 ? 'success' : 'warning', icon: '\u2705', title: rate + '% FP Rate (' + totalFP + ' FP / ' + fmt(totalDecided) + ' decided)', body: 'Highest: ' + worstRule.rule + ' at ' + worstRule.fp_rate + '%. Target: <5%.' });
+    const totalRem2 = DATA.A3c.reduce((s,r) => s + r.remediated, 0);
+    cards.push({ type: rate < 3 ? 'success' : 'warning', icon: '\u2705', title: rate + '% FP Rate (' + totalFP + ' FP / ' + fmt(totalRem2) + ' remediated)', body: 'Highest: ' + worstRule.rule + ' at ' + worstRule.fp_rate + '%. Target: <5%.' });
   }
   if (DATA.B3) {
     const succ = DATA.B3.reduce((s,d) => s + d.succeeded, 0);
