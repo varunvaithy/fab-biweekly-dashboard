@@ -3934,15 +3934,22 @@ function renderPipelineSnapshot() {
   });
   html += '</div>';
 
-  // Row 2: FP Exit (separate row below)
+  // FP Exit: below Block box (middle column width), same structure
   html += '<div style="margin-top:6px; display:flex; gap:6px;">';
-  html += '<div style="flex:1; background:#ec489908; border:1px dashed #ec489940; border-radius:8px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between;">';
-  html += '<div style="font-size:9px; font-weight:700; color:#ec4899; text-transform:uppercase; letter-spacing:0.3px;">FP Exit</div>';
-  html += '<div style="display:flex; gap:16px; align-items:center;">';
-  html += '<div style="text-align:center;"><div style="font-size:8px; color:var(--text-muted); text-transform:uppercase;">Nov\u201925+</div><div style="font-size:14px; font-weight:800; color:#1e293b;">' + fmt(ytdFP.count) + '</div><div style="font-size:9px; color:var(--text-muted);">' + fmtStorage(ytdFP.storage) + '</div></div>';
-  html += '<div style="width:1px; height:28px; background:#ec489930;"></div>';
-  html += '<div style="text-align:center;"><div style="font-size:8px; color:var(--text-muted); text-transform:uppercase;">This Period</div><div style="font-size:14px; font-weight:800; color:#ec4899;">' + fmt(periodFP.count) + '</div><div style="font-size:9px; color:var(--text-muted);">' + fmtStorage(periodFP.storage) + '</div></div>';
-  html += '</div></div></div>';
+  html += '<div style="flex:1;"></div>'; // spacer for RO column
+  html += '<div style="flex:1; background:#ec489908; border:1px dashed #ec489940; border-radius:8px; padding:10px 6px; text-align:center;">';
+  html += '<div style="font-size:9px; font-weight:700; color:#ec4899; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:6px;">FP Exit</div>';
+  html += '<div style="font-size:8px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Nov\u201925+</div>';
+  html += '<div style="font-size:16px; font-weight:800; color:#1e293b;">' + fmt(ytdFP.count) + '</div>';
+  html += '<div style="font-size:9px; color:var(--text-muted);">' + fmtStorage(ytdFP.storage) + '</div>';
+  html += '<div style="margin-top:6px; padding-top:6px; border-top:1px dashed #ec489920;">';
+  html += '<div style="font-size:8px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">This Period</div>';
+  html += '<div style="font-size:13px; font-weight:700; color:#ec4899;">' + fmt(periodFP.count) + '</div>';
+  html += '<div style="font-size:9px; color:var(--text-muted);">' + fmtStorage(periodFP.storage) + '</div>';
+  html += '</div>';
+  html += '</div>';
+  html += '<div style="flex:1;"></div>'; // spacer for Delete column
+  html += '</div>';
 
   // Summary line
   const totalRem = aggregate(DATA.G5, ['ReadOnly', 'Block', 'Delete']);
