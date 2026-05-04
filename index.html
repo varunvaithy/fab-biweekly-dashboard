@@ -1265,6 +1265,17 @@ function getRemediated(gData) {
   return { tenants, storage_tb };
 }
 
+// Authoritative cumulative storage from C2b (action-date scoped).
+// This is the single source of truth for "total storage remediated Nov'25+".
+// All dashboard surfaces should use this instead of G5 storage_tb.
+function getAuthoritativeStorage() {
+  if (DATA.C2b && DATA.C2b.length > 0) {
+    return DATA.C2b.reduce((s, d) => s + (d.storage_tb || 0), 0);
+  }
+  // Fallback to G5 if C2b not available
+  return getRemediated(DATA.G5).storage_tb;
+}
+
 function renderHeroKPIs() {
   if (!DATA.G4 && !DATA.G5 && !DATA.A4) return;
 
@@ -1288,10 +1299,9 @@ function renderHeroKPIs() {
     if (ytdEl) ytdEl.textContent = fmtStorage(totalStorage);
   } else {
     const remG4 = getRemediated(DATA.G4);
-    const remG5 = getRemediated(DATA.G5);
     document.getElementById('hero-storage').textContent = fmtStorage(remG4.storage_tb);
     const ytdEl = document.getElementById('hero-storage-ytd');
-    if (ytdEl) ytdEl.textContent = fmtStorage(remG5.storage_tb);
+    if (ytdEl) ytdEl.textContent = fmtStorage(getAuthoritativeStorage());
   }
 
   // FP hero pills — use latest period from A4 (same data as FP chart)
@@ -1725,13 +1735,11 @@ function renderCumulativeChart() {
   const months = novData.map(d => d.month);
   const vals = novData.map(d => d.storage_pb * 1024);
 
-  // Align cumulative endpoint with G5 remediated total (authoritative pipeline snapshot).
-  // C2 is action-date-scoped; G5 is detection-date-scoped — small difference (~0.7 PB)
-  // attributed to the most recent month for consistency.
-  const remG5 = getRemediated(DATA.G5);
-  if (remG5.storage_tb > 0 && vals.length > 0) {
+  // Align cumulative endpoint with C2b authoritative total for consistency.
+  const authStorage = getAuthoritativeStorage();
+  if (authStorage > 0 && vals.length > 0) {
     const c2Sum = vals.reduce((s, v) => s + v, 0);
-    const diff = c2Sum - remG5.storage_tb;
+    const diff = c2Sum - authStorage;
     vals[vals.length - 1] = Math.max(0, vals[vals.length - 1] - diff);
   }
 
@@ -1837,10 +1845,10 @@ function renderHeroTrend() {
     const fmM = m => { const p = m.split('-'); const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return mn[parseInt(p[1])-1] + " '" + p[0].slice(2); };
     const labels = novData.map(d => fmM(d.month));
     const storageTB = novData.map(d => d.storage_tb || 0);
-    const remG5 = getRemediated(DATA.G5);
-    if (remG5.storage_tb > 0 && storageTB.length > 0) {
+    const authStorage = getAuthoritativeStorage();
+    if (authStorage > 0 && storageTB.length > 0) {
       const c2Sum = storageTB.reduce((s, v) => s + v, 0);
-      const diff = c2Sum - remG5.storage_tb;
+      const diff = c2Sum - authStorage;
       storageTB[storageTB.length - 1] = Math.max(0, storageTB[storageTB.length - 1] - diff);
     }
     let running = 0;
@@ -3081,7 +3089,7 @@ function computeYTD() {
   if (DATA.A4) {
     const periods = DATA.A4.filter(d => d.period_start >= '2025-10-31');
     ytd.tenants = periods.reduce((s, d) => s + d.tenants, 0);
-    ytd.storage_tb = periods.reduce((s, d) => s + d.storage_tb, 0);
+    ytd.storage_tb = getAuthoritativeStorage(); // C2b cumulative — single source of truth
     ytd.fp = periods.reduce((s, d) => s + (d.fp || 0), 0);
     // FP rate: decided denominator = remediated (from G5) + FP
     const _remG5 = getRemediated(DATA.G5);
@@ -3430,10 +3438,10 @@ function renderYTDExec(ytd) {
 function renderYTDDetection(ytd) {
   const bar = document.getElementById('detect-ytd-bar');
   bar.style.display = 'flex';
-  // Tenants & Storage Remediated from G5 snapshot
+  // Tenants from G5 snapshot, storage from C2b (authoritative)
   const remG5 = getRemediated(DATA.G5);
   document.getElementById('detect-ytd-tenants').textContent = fmt(remG5.tenants);
-  document.getElementById('detect-ytd-storage').textContent = fmtStorage(remG5.storage_tb);
+  document.getElementById('detect-ytd-storage').textContent = fmtStorage(getAuthoritativeStorage());
   // Active detection sources: count distinct non-zero sources from G6 data
   let activeSources = 0;
   if (DATA.G6 && DATA.G6.length > 0) {
