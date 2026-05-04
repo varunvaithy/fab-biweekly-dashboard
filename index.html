@@ -3913,33 +3913,33 @@ function renderPipelineSnapshot() {
   const ytdFP = aggregate(DATA.G5, fpKeys);
 
   // Single compact row: RO | Block | Delete — storage prominent, count secondary
-  let html = '<div style="display:flex; gap:6px; align-items:stretch; max-width:50%;">';
+  let html = '<div style="display:flex; gap:8px; align-items:stretch;">';
 
   stages.forEach(stage => {
     const p = aggregate(DATA.G4, stage.keys);
     const y = aggregate(DATA.G5, stage.keys);
-    html += '<div style="flex:1; background:' + stage.color + '08; border:1px solid ' + stage.color + '30; border-radius:8px; padding:8px 6px; text-align:center;">';
-    html += '<div style="font-size:9px; font-weight:700; color:' + stage.color + '; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:4px;">' + stage.label + '</div>';
+    html += '<div style="flex:1; background:' + stage.color + '08; border:1px solid ' + stage.color + '30; border-radius:8px; padding:12px 10px; text-align:center;">';
+    html += '<div style="font-size:10px; font-weight:700; color:' + stage.color + '; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:6px;">' + stage.label + '</div>';
     // Storage first (big), then count (small)
-    html += '<div style="font-size:14px; font-weight:800; color:#1e293b;">' + fmtStorage(y.storage) + '</div>';
-    html += '<div style="font-size:9px; color:var(--text-muted);">' + fmt(y.count) + ' tenants</div>';
+    html += '<div style="font-size:18px; font-weight:800; color:#1e293b;">' + fmtStorage(y.storage) + '</div>';
+    html += '<div style="font-size:10px; color:var(--text-muted); margin-top:2px;">' + fmt(y.count) + ' tenants</div>';
     // This period inline
     if (p.count > 0) {
-      html += '<div style="margin-top:4px; font-size:9px; color:' + stage.color + ';"><span style="font-weight:700;">' + fmtStorage(p.storage) + '</span> · ' + fmt(p.count) + ' this period</div>';
+      html += '<div style="margin-top:6px; font-size:10px; color:' + stage.color + ';"><span style="font-weight:700;">' + fmtStorage(p.storage) + '</span> · ' + fmt(p.count) + ' this period</div>';
     }
     html += '</div>';
   });
   html += '</div>';
 
-  // FP Exit: below Block (middle), same compact width
-  html += '<div style="margin-top:6px; display:flex; gap:6px; max-width:50%;">';
+  // FP Exit: below Block (middle), same width as one column
+  html += '<div style="margin-top:8px; display:flex; gap:8px;">';
   html += '<div style="flex:1;"></div>';
-  html += '<div style="flex:1; background:#ec489908; border:1px dashed #ec489940; border-radius:8px; padding:8px 6px; text-align:center;">';
-  html += '<div style="font-size:9px; font-weight:700; color:#ec4899; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:4px;">FP Exit</div>';
-  html += '<div style="font-size:14px; font-weight:800; color:#1e293b;">' + fmtStorage(ytdFP.storage) + '</div>';
-  html += '<div style="font-size:9px; color:var(--text-muted);">' + fmt(ytdFP.count) + ' tenants</div>';
+  html += '<div style="flex:1; background:#ec489908; border:1px dashed #ec489940; border-radius:8px; padding:12px 10px; text-align:center;">';
+  html += '<div style="font-size:10px; font-weight:700; color:#ec4899; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:6px;">FP Exit</div>';
+  html += '<div style="font-size:18px; font-weight:800; color:#1e293b;">' + fmtStorage(ytdFP.storage) + '</div>';
+  html += '<div style="font-size:10px; color:var(--text-muted); margin-top:2px;">' + fmt(ytdFP.count) + ' tenants</div>';
   if (periodFP.count > 0) {
-    html += '<div style="margin-top:4px; font-size:9px; color:#ec4899;"><span style="font-weight:700;">' + fmtStorage(periodFP.storage) + '</span> · ' + fmt(periodFP.count) + ' this period</div>';
+    html += '<div style="margin-top:6px; font-size:10px; color:#ec4899;"><span style="font-weight:700;">' + fmtStorage(periodFP.storage) + '</span> · ' + fmt(periodFP.count) + ' this period</div>';
   }
   html += '</div>';
   html += '<div style="flex:1;"></div>';
