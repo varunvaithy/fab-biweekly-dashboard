@@ -346,7 +346,8 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
     <div class="ytd-metric"><div class="ytd-val" id="detect-ytd-sources">—</div><div class="ytd-lbl">Active Sources</div></div>
     <div class="ytd-metric"><div class="ytd-val" id="detect-ytd-fp">—</div><div class="ytd-lbl">FP Rate (Nov'25+)</div></div>
 
-    <div class="ytd-metric"><div class="ytd-val" id="cogs-ytd-cost">—</div><div class="ytd-lbl">Est. Cost Saved</div></div>
+    <div class="ytd-metric"><div class="ytd-val" id="cogs-ytd-impact">—</div><div class="ytd-lbl">COGS Impact <span class="tip"><span class="tip-icon">?</span><span class="tip-text">Actual savings from deleted tenants — storage bytes freed.</span></span></div></div>
+    <div class="ytd-metric"><div class="ytd-val" id="cogs-ytd-opportunity">—</div><div class="ytd-lbl">COGS Opportunity <span class="tip"><span class="tip-icon">?</span><span class="tip-text">Projected savings from tenants in RO/Block — not yet deleted.</span></span></div></div>
 
   </div>
 
@@ -454,7 +455,7 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
   </div>
 
   <div style="margin-top: 32px; padding: 12px 16px; background: var(--surface); border-left: 3px solid var(--border); border-radius: 4px; font-size: 11px; color: var(--text-muted);">
-    <strong>Note:</strong> "Est. Cost Saved" is calculated using standard Azure storage rates ($240/TB/yr). Actual savings may vary based on SKU, region, and contract terms.
+    <strong>Note:</strong> Cost estimates use $0.00989/GB/month (Azure standard storage). <strong>COGS Impact</strong> = savings realized from deleted tenants (storage freed). <strong>COGS Opportunity</strong> = projected savings from tenants in RO/Block awaiting deletion.
   </div>
 </div>
 
@@ -3819,8 +3820,21 @@ function renderYTDCogs(ytd) {
   const remG5 = getRemediated(DATA.G5);
   const tenantEl = document.getElementById('cogs-ytd-tenants');
   if (tenantEl) tenantEl.textContent = fmt(remG5.tenants);
-  const costEl = document.getElementById('cogs-ytd-cost');
-  if (costEl) costEl.textContent = ytd.cost ? fmtUSD(ytd.cost) : fmtUSD(ytd.storage_tb * 240);
+
+  // Rate: USD 0.00989/GB/month = $10.127/TB/month = $121.53/TB/yr
+  const RATE_PER_TB_YR = 0.00989 * 1024 * 12; // ~121.53
+
+  // COGS Impact: only Delete Completed — storage actually freed
+  const deleteStatuses = ['Delete Completed', 'Delete In-Progress'];
+  const deletedTB = DATA.G5 ? DATA.G5.filter(r => deleteStatuses.some(s => (r.status || '').includes(s))).reduce((s,r) => s + (r.storage_tb || 0), 0) : 0;
+  const impactEl = document.getElementById('cogs-ytd-impact');
+  if (impactEl) impactEl.textContent = fmtUSD(deletedTB * RATE_PER_TB_YR);
+
+  // COGS Opportunity: RO/Block (completed + in-progress) — plan to delete but haven't yet
+  const opportunityStatuses = ['ReadOnly Completed', 'ReadOnly In-Progress', 'Block Completed', 'Block In-Progress'];
+  const opportunityTB = DATA.G5 ? DATA.G5.filter(r => opportunityStatuses.some(s => (r.status || '').includes(s))).reduce((s,r) => s + (r.storage_tb || 0), 0) : 0;
+  const oppEl = document.getElementById('cogs-ytd-opportunity');
+  if (oppEl) oppEl.textContent = fmtUSD(opportunityTB * RATE_PER_TB_YR);
 }
 
 function renderYTDHealth(ytd) {
