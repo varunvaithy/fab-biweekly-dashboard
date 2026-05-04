@@ -3832,10 +3832,10 @@ function renderYTDDetection(ytd) {
 function renderYTDCogs(ytd) {
   // Use shared getRemediated() — same definition as exec summary hero cards
   const remG5 = getRemediated(DATA.G5);
-  document.getElementById('cogs-ytd-tenants').textContent = fmt(remG5.tenants);
+  const tenantEl = document.getElementById('cogs-ytd-tenants');
+  if (tenantEl) tenantEl.textContent = fmt(remG5.tenants);
   const costEl = document.getElementById('cogs-ytd-cost');
   if (costEl) costEl.textContent = ytd.cost ? fmtUSD(ytd.cost) : fmtUSD(ytd.storage_tb * 240);
-
 }
 
 function renderYTDHealth(ytd) {
@@ -3960,43 +3960,45 @@ function renderPipelineSnapshot() {
 
 
 function init() {
+  const safe = (fn, name) => { try { fn(); } catch(e) { console.warn('[FAB] ' + name + ' failed:', e.message); } };
+
   if (DATA.lastUpdated) {
     const _fm = d => { const p=d.split('-'); const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return mn[parseInt(p[1])-1]+' '+parseInt(p[2])+', '+p[0]; };
-    document.getElementById('periodLabel').innerHTML = 
+    const el = document.getElementById('periodLabel');
+    if (el) el.innerHTML = 
       `<span style="font-size:15px; font-weight:700;">${_fm(DATA.periodStart)} — ${_fm(DATA.periodEnd)}</span><span style="font-size:11px; font-weight:400; color:var(--text-muted); margin-left:10px;">Updated ${_fm(DATA.lastUpdated)}</span>`;
   }
   
   // Compute YTD from monthly breakdowns
   const ytd = computeYTD();
   
-  renderHeroKPIs();
-  renderExecReliability();
-  renderExecInvestigations();
-  renderPipelineSnapshot();
-  if (ytd) renderYTDExec(ytd);
-  renderStaleWarning();
-  renderStatPills();
-  // renderWhatsNew(); // Disabled for v1 launch — will populate from next report
-  renderAlerts();
-  renderHeroTrend();
-  renderFPHero();
-  renderDailySource();
-  if (ytd) renderYTDDetection(ytd);
-  renderSourceMix();
-  renderRuleScorecard();
-  renderRuleHealth();
-  renderSKUChart();
-  renderAgeChart();
-  renderFPTrend();
-  if (ytd) renderYTDCogs(ytd);
-    renderFunnel();
-renderPipelineJourney();
-  renderSpeed();
-  renderSuccessRate();
-  renderBacklog();
-  renderGeo();
-  renderCategoryTrend();
-  renderInvestigations();
+  safe(() => renderHeroKPIs(), 'renderHeroKPIs');
+  safe(() => renderExecReliability(), 'renderExecReliability');
+  safe(() => renderExecInvestigations(), 'renderExecInvestigations');
+  safe(() => renderPipelineSnapshot(), 'renderPipelineSnapshot');
+  if (ytd) safe(() => renderYTDExec(ytd), 'renderYTDExec');
+  safe(() => renderStaleWarning(), 'renderStaleWarning');
+  safe(() => renderStatPills(), 'renderStatPills');
+  safe(() => renderAlerts(), 'renderAlerts');
+  safe(() => renderHeroTrend(), 'renderHeroTrend');
+  safe(() => renderFPHero(), 'renderFPHero');
+  safe(() => renderDailySource(), 'renderDailySource');
+  if (ytd) safe(() => renderYTDDetection(ytd), 'renderYTDDetection');
+  safe(() => renderSourceMix(), 'renderSourceMix');
+  safe(() => renderRuleScorecard(), 'renderRuleScorecard');
+  safe(() => renderRuleHealth(), 'renderRuleHealth');
+  safe(() => renderSKUChart(), 'renderSKUChart');
+  safe(() => renderAgeChart(), 'renderAgeChart');
+  safe(() => renderFPTrend(), 'renderFPTrend');
+  if (ytd) safe(() => renderYTDCogs(ytd), 'renderYTDCogs');
+  safe(() => renderFunnel(), 'renderFunnel');
+  safe(() => renderPipelineJourney(), 'renderPipelineJourney');
+  safe(() => renderSpeed(), 'renderSpeed');
+  safe(() => renderSuccessRate(), 'renderSuccessRate');
+  safe(() => renderBacklog(), 'renderBacklog');
+  safe(() => renderGeo(), 'renderGeo');
+  safe(() => renderCategoryTrend(), 'renderCategoryTrend');
+  safe(() => renderInvestigations(), 'renderInvestigations');
 }
 
 init();
