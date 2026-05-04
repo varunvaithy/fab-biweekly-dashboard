@@ -1755,26 +1755,48 @@ function getAuthoritativeStorage() {
 }
 
 function renderHeroKPIs() {
-  if (!DATA.A1) return;
-  const c = DATA.A1.current, p = DATA.A1.previous;
-
   // Period range label
   if (DATA.periodStart && DATA.periodEnd) {
     const el = document.getElementById('period-range-label');
-    if (el) el.textContent = `${DATA.periodStart} ΓåÆ ${DATA.periodEnd}`;
+    if (el) el.textContent = `${DATA.periodStart} \u2192 ${DATA.periodEnd}`;
   }
 
-  document.getElementById('hero-tenants').textContent = fmt(c.tenants);
-  document.getElementById('hero-tenants-mom').innerHTML = momArrow(c.tenants, p.tenants);
+  // Storage pills
+  const authStorage = getAuthoritativeStorage();
+  const el1 = document.getElementById('hero-storage');
+  if (el1) el1.textContent = fmtStorage(authStorage);
 
-  document.getElementById('hero-storage').textContent = fmtStorage(c.storage_tb);
-  document.getElementById('hero-storage-mom').innerHTML = momArrow(c.storage_tb, p.storage_tb);
+  // This-period storage from C2b (latest row)
+  if (DATA.C2b && DATA.C2b.length) {
+    const last = DATA.C2b[DATA.C2b.length - 1];
+    const periodTb = last.storage_tb || (last.storage_pb ? last.storage_pb * 1024 : 0);
+    const elP = document.getElementById('hero-storage');
+    if (elP) elP.textContent = fmtStorage(periodTb);
+  }
 
-  document.getElementById('hero-fp').textContent = fmtPct(c.fp_rate);
-  document.getElementById('hero-fp-mom').innerHTML = momArrow(c.fp_rate, p.fp_rate, true);
+  const elYtd = document.getElementById('hero-storage-ytd');
+  if (elYtd) elYtd.textContent = fmtStorage(authStorage);
 
-  // Status breakdown sub-boxes
-  renderStatusBoxes();
+  // FP pills
+  if (DATA.C2b && DATA.C2b.length) {
+    const last = DATA.C2b[DATA.C2b.length - 1];
+    const fpRate = last.fp > 0 ? (last.fp / (last.tenants + last.fp) * 100) : 0;
+    const elFp = document.getElementById('hero-fp');
+    if (elFp) elFp.textContent = fmtPct(fpRate);
+    const elFpSub = document.getElementById('hero-fp-sub');
+    if (elFpSub) elFpSub.textContent = `${last.fp} FP / ${fmt(last.tenants + last.fp)} total`;
+  }
+
+  // YTD FP
+  if (DATA.C2b) {
+    const totalFP = DATA.C2b.reduce((s, r) => s + (r.fp || 0), 0);
+    const totalRem = DATA.C2b.reduce((s, r) => s + r.tenants, 0);
+    const ytdRate = totalRem + totalFP > 0 ? (totalFP / (totalRem + totalFP) * 100) : 0;
+    const elFpYtd = document.getElementById('hero-fp-ytd');
+    if (elFpYtd) elFpYtd.textContent = fmtPct(ytdRate);
+    const elFpYtdCount = document.getElementById('hero-fp-ytd-count');
+    if (elFpYtdCount) elFpYtdCount.textContent = `${totalFP} FP / ${fmt(totalRem + totalFP)}`;
+  }
 }
 
 function renderStatusBoxes() {
