@@ -256,12 +256,17 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
         <div>
           <div style="font-size: 13px; font-weight: 700; color: var(--text);">Storage Remediated</div>
-          <div style="font-size: 10px; color: var(--text-muted);">Monthly bars + cumulative line (Nov '25 → Now)</div>
+          <div style="font-size: 10px; color: var(--text-muted);">Biweekly bars + cumulative line (Nov '25 → Now)</div>
         </div>
-        <div style="text-align: right;">
-          <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">This Period</div>
-          <div style="font-size: 20px; font-weight: 700; color: var(--accent);" id="hero-storage">—</div>
-          <div style="font-size: 9px; color: var(--ytd);" id="hero-storage-ytd-label"></div>
+        <div style="display: flex; gap: 8px; align-items: stretch;">
+          <div id="hero-storage-pill" style="background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2); border-radius: 8px; padding: 6px 12px; text-align: center; min-width: 80px;">
+            <div style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px;">This Period</div>
+            <div style="font-size: 16px; font-weight: 800; color: #2563eb;" id="hero-storage">—</div>
+          </div>
+          <div id="hero-storage-ytd-pill" style="background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 8px; padding: 6px 12px; text-align: center; min-width: 80px;">
+            <div style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px;">Nov'25+</div>
+            <div style="font-size: 16px; font-weight: 800; color: #16a34a;" id="hero-storage-ytd">—</div>
+          </div>
         </div>
       </div>
       <div class="chart-container" style="height: 340px;"><canvas id="chart-hero-trend"></canvas></div>
@@ -274,11 +279,17 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
           <div style="font-size: 13px; font-weight: 700; color: var(--text);">False Positive Rate</div>
           <div style="font-size: 10px; color: var(--text-muted);">Biweekly · FP ÷ (remediated + FP) × 100</div>
         </div>
-        <div style="text-align: right;">
-          <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">This Period</div>
-          <div style="font-size: 20px; font-weight: 700; color: var(--accent);" id="hero-fp">—</div>
-          <div style="font-size: 9px; color: var(--text-muted);" id="hero-fp-sub"></div>
-          <div style="font-size: 9px; color: var(--ytd);" id="hero-fp-ytd-label"></div>
+        <div style="display: flex; gap: 8px; align-items: stretch;">
+          <div id="hero-fp-pill" style="background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2); border-radius: 8px; padding: 6px 12px; text-align: center; min-width: 72px;">
+            <div style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px;">This Period</div>
+            <div style="font-size: 16px; font-weight: 800; color: #2563eb;" id="hero-fp">—</div>
+            <div style="font-size: 8px; color: var(--text-muted);" id="hero-fp-sub"></div>
+          </div>
+          <div id="hero-fp-ytd-pill" style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 6px 12px; text-align: center; min-width: 72px;">
+            <div style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px;">Nov'25+</div>
+            <div style="font-size: 16px; font-weight: 800; color: #b45309;" id="hero-fp-ytd">—</div>
+            <div style="font-size: 8px; color: var(--text-muted);" id="hero-fp-ytd-count"></div>
+          </div>
         </div>
       </div>
       <div class="chart-container" style="height: 340px;"><canvas id="chart-fp-hero"></canvas></div>
@@ -1268,41 +1279,39 @@ function renderHeroKPIs() {
     });
   }
 
-  // Storage hero number — use C2b (same source as chart) for consistency
+  // Storage hero pills — use C2b (same source as chart) for consistency
   if (DATA.C2b && DATA.C2b.length > 0) {
     const curPeriod = DATA.C2b.reduce((best, d) => d.period_num < best.period_num ? d : best);
     document.getElementById('hero-storage').textContent = fmtStorage(curPeriod.storage_tb || 0);
     const totalStorage = DATA.C2b.reduce((s, d) => s + (d.storage_tb || 0), 0);
-    const ytdEl = document.getElementById('hero-storage-ytd-label');
-    if (ytdEl) ytdEl.textContent = "Nov'25+: " + fmtStorage(totalStorage);
+    const ytdEl = document.getElementById('hero-storage-ytd');
+    if (ytdEl) ytdEl.textContent = fmtStorage(totalStorage);
   } else {
     const remG4 = getRemediated(DATA.G4);
     const remG5 = getRemediated(DATA.G5);
     document.getElementById('hero-storage').textContent = fmtStorage(remG4.storage_tb);
-    const ytdEl = document.getElementById('hero-storage-ytd-label');
-    if (ytdEl) ytdEl.textContent = "Nov'25+: " + fmtStorage(remG5.storage_tb);
+    const ytdEl = document.getElementById('hero-storage-ytd');
+    if (ytdEl) ytdEl.textContent = fmtStorage(remG5.storage_tb);
   }
 
-  // FP hero number — use latest period from A4 (same data as FP chart)
+  // FP hero pills — use latest period from A4 (same data as FP chart)
   if (DATA.A4 && DATA.A4.length > 0) {
     const fpSorted = [...DATA.A4].filter(d => d.period_start >= '2025-10-31').sort((a, b) => a.period_start.localeCompare(b.period_start));
     const cur = fpSorted[fpSorted.length - 1];
     document.getElementById('hero-fp').textContent = fmtPct(cur.fp_rate);
     const fpSub = document.getElementById('hero-fp-sub');
-    if (fpSub) fpSub.textContent = fmt(cur.fp) + ' FP of ' + fmt(cur.tenants) + ' tenants';
+    if (fpSub) fpSub.textContent = fmt(cur.fp) + ' FP / ' + fmt(cur.tenants);
     // Cumulative FP rate across Nov'25+ (sum FP / sum decided)
     const cumFP = fpSorted.reduce((s, d) => s + (d.fp || 0), 0);
     const cumDecided = fpSorted.reduce((s, d) => {
-      // decided = tenants in statuses 0,3,4,5,6,7,9,10 — approximate via fp_rate back-calculation
-      // fp_rate = fp / decided * 100  ⇒  decided = fp / (fp_rate/100)
-      // But safer: A4 has tenants + fp. Decided ≈ tenants (most are decided by now for older periods)
-      // Best proxy: use fp and fp_rate to derive decided where fp_rate > 0
       if (d.fp_rate > 0) return s + Math.round(d.fp / (d.fp_rate / 100));
       return s + d.tenants;
     }, 0);
     const cumFPRate = cumDecided > 0 ? (cumFP / cumDecided * 100) : 0;
-    const fpYtdEl = document.getElementById('hero-fp-ytd-label');
-    if (fpYtdEl) fpYtdEl.textContent = "Nov'25+: " + fmtPct(cumFPRate) + ' (' + fmt(cumFP) + ' FP)';
+    const fpYtdEl = document.getElementById('hero-fp-ytd');
+    if (fpYtdEl) fpYtdEl.textContent = fmtPct(cumFPRate);
+    const fpYtdCount = document.getElementById('hero-fp-ytd-count');
+    if (fpYtdCount) fpYtdCount.textContent = fmt(cumFP) + ' FP';
   }
 
   renderStatusBoxes();
@@ -1800,46 +1809,6 @@ function renderHeroTrend() {
     const barBg = storageTB.map((_, i) => i === storageTB.length - 1 ? 'rgba(37,99,235,0.85)' : 'rgba(59,130,246,0.5)');
     const barBd = storageTB.map((_, i) => i === storageTB.length - 1 ? '#1d4ed8' : '#3b82f6');
 
-    const lastBar = storageTB[storageTB.length - 1];
-    const lastCum = cumulative[cumulative.length - 1];
-    const heroBoxPlugin = {
-      id: 'heroAnnotationBoxes',
-      afterDatasetsDraw(chart) {
-        const { ctx: c, chartArea: { left, right, top }, scales: { y, y1 } } = chart;
-        const meta0 = chart.getDatasetMeta(0); // bars
-        const meta1 = chart.getDatasetMeta(1); // cumulative line
-        const lastBarEl = meta0.data[meta0.data.length - 1];
-        const lastLineEl = meta1.data[meta1.data.length - 1];
-        if (!lastBarEl || !lastLineEl) return;
-        c.save();
-        const font = '700 10px Inter, system-ui, sans-serif';
-        c.font = font;
-        // Bar annotation (This Period)
-        const barLabel = fmtStorage(lastBar);
-        const barW = c.measureText(barLabel).width + 12;
-        const barH = 18;
-        const barX = lastBarEl.x - barW / 2;
-        const barY = y.getPixelForValue(lastBar) - barH - 6;
-        c.fillStyle = 'rgba(37,99,235,0.12)'; c.strokeStyle = '#2563eb';
-        c.lineWidth = 1; c.beginPath(); c.roundRect(barX, barY, barW, barH, 4); c.fill(); c.stroke();
-        c.fillStyle = '#1d4ed8'; c.textAlign = 'center'; c.textBaseline = 'middle';
-        c.fillText(barLabel, lastBarEl.x, barY + barH / 2);
-        // Cumulative annotation
-        const cumLabel = fmtStorage(lastCum);
-        const cumW = c.measureText(cumLabel).width + 12;
-        const cumH = 18;
-        const cumX = lastLineEl.x - cumW / 2;
-        let cumY = y1.getPixelForValue(lastCum) - cumH - 6;
-        // Avoid overlap with bar annotation
-        if (Math.abs(cumY - barY) < barH + 4) cumY = barY - cumH - 4;
-        c.fillStyle = 'rgba(34,197,94,0.12)'; c.strokeStyle = '#16a34a';
-        c.lineWidth = 1; c.beginPath(); c.roundRect(cumX, cumY, cumW, cumH, 4); c.fill(); c.stroke();
-        c.fillStyle = '#15803d'; c.textAlign = 'center'; c.textBaseline = 'middle';
-        c.fillText(cumLabel, lastLineEl.x, cumY + cumH / 2);
-        c.restore();
-      }
-    };
-
     chartInstances['hero-trend'] = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -1849,7 +1818,6 @@ function renderHeroTrend() {
           { label: 'Cumulative', data: cumulative, type: 'line', borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.06)', borderWidth: 2.5, pointRadius: cumulative.map((_, i) => i === cumulative.length - 1 ? 6 : 3), pointBackgroundColor: cumulative.map((_, i) => i === cumulative.length - 1 ? '#16a34a' : '#22c55e'), fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
         ]
       },
-      plugins: [heroBoxPlugin],
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
@@ -1934,44 +1902,6 @@ function renderFPHero() {
   const barBg = fpRates.map((_, i) => i === fpRates.length - 1 ? 'rgba(37,99,235,0.85)' : 'rgba(59,130,246,0.45)');
   const barBd = fpRates.map((_, i) => i === fpRates.length - 1 ? '#1d4ed8' : '#3b82f6');
 
-  const lastFP = fpRates[fpRates.length - 1];
-  const lastCumFP = cumFPRates[cumFPRates.length - 1];
-  const fpBoxPlugin = {
-    id: 'fpAnnotationBoxes',
-    afterDatasetsDraw(chart) {
-      const { ctx: c, scales: { y } } = chart;
-      const meta0 = chart.getDatasetMeta(0); // bars
-      const meta1 = chart.getDatasetMeta(1); // cumulative line
-      const lastBarEl = meta0.data[meta0.data.length - 1];
-      const lastLineEl = meta1.data[meta1.data.length - 1];
-      if (!lastBarEl || !lastLineEl) return;
-      c.save();
-      c.font = '700 10px Inter, system-ui, sans-serif';
-      // Bar annotation (Period FP Rate)
-      const barLabel = lastFP.toFixed(2) + '%';
-      const barW = c.measureText(barLabel).width + 12;
-      const barH = 18;
-      const barX = lastBarEl.x - barW / 2;
-      const barY = y.getPixelForValue(lastFP) - barH - 6;
-      c.fillStyle = 'rgba(37,99,235,0.12)'; c.strokeStyle = '#2563eb';
-      c.lineWidth = 1; c.beginPath(); c.roundRect(barX, barY, barW, barH, 4); c.fill(); c.stroke();
-      c.fillStyle = '#1d4ed8'; c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.fillText(barLabel, lastBarEl.x, barY + barH / 2);
-      // Cumulative annotation
-      const cumLabel = lastCumFP.toFixed(2) + '%';
-      const cumW = c.measureText(cumLabel).width + 12;
-      const cumH = 18;
-      const cumX = lastLineEl.x - cumW / 2;
-      let cumY = y.getPixelForValue(lastCumFP) - cumH - 6;
-      if (Math.abs(cumY - barY) < barH + 4) cumY = barY - cumH - 4;
-      c.fillStyle = 'rgba(245,158,11,0.12)'; c.strokeStyle = '#f59e0b';
-      c.lineWidth = 1; c.beginPath(); c.roundRect(cumX, cumY, cumW, cumH, 4); c.fill(); c.stroke();
-      c.fillStyle = '#b45309'; c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.fillText(cumLabel, lastLineEl.x, cumY + cumH / 2);
-      c.restore();
-    }
-  };
-
   chartInstances['fp-hero'] = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -1981,7 +1911,6 @@ function renderFPHero() {
         { label: "Nov'25+ Cumulative", data: cumFPRates, type: 'line', borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2.5, borderDash: [6, 3], pointRadius: cumFPRates.map((_, i) => i === cumFPRates.length - 1 ? 6 : 0), pointBackgroundColor: '#f59e0b', pointBorderColor: '#f59e0b', fill: false, tension: 0.3, yAxisID: 'y', order: 1 }
       ]
     },
-    plugins: [fpBoxPlugin],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
