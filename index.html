@@ -2478,18 +2478,68 @@ function renderRuleScorecard() {
     </tr>`;
   }).join('');
 
-  // Summary row — from A3c totals (rules only) for consistency with per-rule rows
+  // DS Model row from D4
+  if (DATA.D4 && DATA.D4.length) {
+    const dsTenants = DATA.D4.reduce((s, d) => s + d.tenants, 0);
+    const dsStorage = DATA.D4.reduce((s, d) => s + (d.storage_pb || 0), 0) * 1024; // PB → TB
+    const dsFP = DATA.D4.reduce((s, d) => s + (d.fp || 0), 0);
+    const dsRate = dsTenants > 0 ? (dsFP / dsTenants * 100) : 0;
+    const dsRateColor = dsRate === 0 ? 'var(--green)' : dsRate < 2 ? 'var(--amber)' : 'var(--red)';
+    const dsPeriod = DATA.D4.find(d => d.month >= DATA.periodStart?.substring(0, 7));
+    const dsPeriodTenants = dsPeriod ? dsPeriod.tenants : 0;
+    tbody.innerHTML += `<tr style="background: rgba(168,85,247,0.04);">
+      <td class="bold" style="color:var(--purple);">DS</td>
+      <td>DS Model (2026)</td>
+      <td class="num">${fmt(dsPeriodTenants)}</td>
+      <td class="num" style="color: var(--ytd);">${fmt(dsTenants)}</td>
+      <td class="num" style="font-size:11px; color:var(--text-muted);">${fmtStorage(dsStorage)}</td>
+      <td class="num">${dsFP > 0 ? '<span style="color:var(--red);font-weight:600;">' + fmt(dsFP) + '</span>' : '0'}</td>
+      <td class="num"><span style="color:${dsRateColor};font-weight:600;">${dsRate.toFixed(2)}%</span></td>
+    </tr>`;
+  }
+
+  // Investigation row from D5
+  if (DATA.D5 && DATA.D5.length) {
+    const invTenants = DATA.D5.reduce((s, d) => s + d.tenants, 0);
+    const invStorage = DATA.D5.reduce((s, d) => s + (d.storage_pb || 0), 0) * 1024; // PB → TB
+    const invFP = DATA.D5.reduce((s, d) => s + (d.fp || 0), 0);
+    const invRate = invTenants > 0 ? (invFP / invTenants * 100) : 0;
+    const invRateColor = invRate === 0 ? 'var(--green)' : invRate < 2 ? 'var(--amber)' : 'var(--red)';
+    const invPeriod = DATA.D5.find(d => d.month >= DATA.periodStart?.substring(0, 7));
+    const invPeriodTenants = invPeriod ? invPeriod.tenants : 0;
+    tbody.innerHTML += `<tr style="background: rgba(6,182,212,0.04);">
+      <td class="bold" style="color:var(--cyan);">INV</td>
+      <td>Ad-hoc Investigation</td>
+      <td class="num">${fmt(invPeriodTenants)}</td>
+      <td class="num" style="color: var(--ytd);">${fmt(invTenants)}</td>
+      <td class="num" style="font-size:11px; color:var(--text-muted);">${fmtStorage(invStorage)}</td>
+      <td class="num">${invFP > 0 ? '<span style="color:var(--red);font-weight:600;">' + fmt(invFP) + '</span>' : '0'}</td>
+      <td class="num"><span style="color:${invRateColor};font-weight:600;">${invRate.toFixed(2)}%</span></td>
+    </tr>`;
+  }
+
+  // Summary row — ALL sources combined
   const a3cTotalRem = DATA.A3c ? DATA.A3c.reduce((s, d) => s + (d.remediated || 0), 0) : 0;
   const a3cTotalStorage = DATA.A3c ? DATA.A3c.reduce((s, d) => s + (d.storage_tb || 0), 0) : 0;
+  const dsTotalTenants = DATA.D4 ? DATA.D4.reduce((s, d) => s + d.tenants, 0) : 0;
+  const dsTotalStorage = DATA.D4 ? DATA.D4.reduce((s, d) => s + (d.storage_pb || 0), 0) * 1024 : 0;
+  const dsTotalFP = DATA.D4 ? DATA.D4.reduce((s, d) => s + (d.fp || 0), 0) : 0;
+  const invTotalTenants = DATA.D5 ? DATA.D5.reduce((s, d) => s + d.tenants, 0) : 0;
+  const invTotalStorage = DATA.D5 ? DATA.D5.reduce((s, d) => s + (d.storage_pb || 0), 0) * 1024 : 0;
+  const invTotalFP = DATA.D5 ? DATA.D5.reduce((s, d) => s + (d.fp || 0), 0) : 0;
+  const grandRem = a3cTotalRem + dsTotalTenants + invTotalTenants;
+  const grandStorage = a3cTotalStorage + dsTotalStorage + invTotalStorage;
+  const grandFP = overallFP + dsTotalFP + invTotalFP;
+  const grandRate = grandRem > 0 ? (grandFP / (grandRem + grandFP) * 100) : 0;
   const summaryRow = document.createElement('tr');
   summaryRow.style.cssText = 'background: rgba(37,99,235,0.06); font-weight: 600; border-top: 2px solid var(--accent);';
-  const rateColor = overallFPRate === 0 ? 'var(--green)' : overallFPRate < 1 ? 'var(--green)' : overallFPRate < 5 ? 'var(--amber)' : 'var(--red)';
+  const rateColor = grandRate === 0 ? 'var(--green)' : grandRate < 1 ? 'var(--green)' : grandRate < 5 ? 'var(--amber)' : 'var(--red)';
   summaryRow.innerHTML = `
-    <td colspan="3" style="text-align: right; font-size: 11px; color: var(--text-muted); font-weight: 600;">RULES TOTAL (Nov'25\u2192Now)</td>
-    <td class="num" style="color: var(--ytd);">${fmt(a3cTotalRem)}</td>
-    <td class="num" style="font-size:11px; color:var(--text-muted);">${fmtStorage(a3cTotalStorage)}</td>
-    <td class="num" style="color: var(--red); font-weight: 700;">${fmt(overallFP)}</td>
-    <td class="num" style="color: ${rateColor}; font-weight: 700;">${overallFPRate.toFixed(2)}%</td>
+    <td colspan="3" style="text-align: right; font-size: 11px; color: var(--text-muted); font-weight: 600;">ALL SOURCES (Nov'25\u2192Now)</td>
+    <td class="num" style="color: var(--ytd);">${fmt(grandRem)}</td>
+    <td class="num" style="font-size:11px; color:var(--text-muted);">${fmtStorage(grandStorage)}</td>
+    <td class="num" style="color: var(--red); font-weight: 700;">${fmt(grandFP)}</td>
+    <td class="num" style="color: ${rateColor}; font-weight: 700;">${grandRate.toFixed(2)}%</td>
   `;
   tbody.appendChild(summaryRow);
 
