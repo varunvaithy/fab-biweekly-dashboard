@@ -3958,7 +3958,7 @@ function renderPipelineSnapshot() {
     { label: 'Delete', keys: ['Delete'], color: '#22c55e' }
   ];
 
-  const fpKeys = ['False Positive', 'FP Reported'];
+  const fpKeys = ['False Positive'];  // Only confirmed FP — excludes "FP Reported" (pending review)
   const periodFP = aggregate(DATA.G4, fpKeys);
   const ytdFP = aggregate(DATA.G5, fpKeys);
 
