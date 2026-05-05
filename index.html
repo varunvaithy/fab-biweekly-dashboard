@@ -2073,12 +2073,12 @@ function renderStatPills() {
   if (DATA.INV) {
     const active = DATA.INV.filter(i => i.status !== 'complete');
     const storage = active.reduce((s, i) => s + (i.storage_used_tb || 0), 0);
-    pills.push({ icon: '≡ƒöì', color: 'rgba(168,85,247,0.15)', val: fmtStorage(storage), lbl: active.length + ' Active Investigations', valColor: 'var(--purple)' });
+    pills.push({ icon: '🔍', color: 'rgba(168,85,247,0.15)', val: fmtStorage(storage), lbl: active.length + ' Active Investigations', valColor: 'var(--purple)' });
   }
 
   // All-time impact
   if (DATA.F1) {
-    pills.push({ icon: '≡ƒÄ»', color: 'rgba(6,182,212,0.15)', val: fmt(DATA.F1.total_identified), lbl: 'All-Time Detected', valColor: 'var(--cyan)' });
+    pills.push({ icon: '🎯', color: 'rgba(6,182,212,0.15)', val: fmt(DATA.F1.total_identified), lbl: 'All-Time Detected', valColor: 'var(--cyan)' });
   }
 
   container.innerHTML = pills.map(p => `
