@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -388,9 +388,9 @@ body {
       <div class="card">
         <div id="backlog-breakdown-label" class="kpi-label">Backlog breakdown</div>
         <div class="kpi-pair">
-          <div class="kpi-dual"><div class="unit">Due now or overdue</div><div id="breakdown-due" class="val" style="color:var(--red);">--</div></div>
-          <div class="kpi-dual"><div class="unit">Future-dated in rollout plan</div><div id="breakdown-future" class="val" style="color:var(--primary);">--</div></div>
-          <div class="kpi-dual"><div class="unit">Other remaining states</div><div id="breakdown-other" class="val" style="color:var(--slate);">--</div></div>
+          <div class="kpi-dual"><div class="unit">Overdue (deletion window passed)</div><div id="breakdown-due" class="val" style="color:var(--red);">--</div></div>
+          <div class="kpi-dual"><div class="unit">On track (deletion window upcoming)</div><div id="breakdown-future" class="val" style="color:var(--primary);">--</div></div>
+          <div class="kpi-dual"><div class="unit">Not yet schedulable (no block date)</div><div id="breakdown-other" class="val" style="color:var(--slate);">--</div></div>
         </div>
         <div id="breakdown-wow" class="kpi-wow">WoW: <strong>loading</strong></div>
         <div id="breakdown-formula" class="kpi-formula">--</div>
@@ -489,7 +489,7 @@ const DATA_FILES = {
   dd5: 'Results for Dashboard/DD5.csv',
   dd6: 'Results for Dashboard/DD6.csv',
   dd8: 'Results for Dashboard/DD8.csv',
-  executionSheet: 'Output/Q-TENANT-DELETION-EXECUTION-SHEET.csv'
+  dd9: 'Results for Dashboard/DD9.csv'
 };
 
 function parseCsv(text) {
@@ -618,14 +618,14 @@ function renderSourceTable(rows) {
 
 async function renderDashboard() {
   try {
-    const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, executionText] = await Promise.all([
+    const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, dd9Text] = await Promise.all([
       fetchText(DATA_FILES.dd1),
       fetchText(DATA_FILES.dd2),
       fetchText(DATA_FILES.dd4),
       fetchText(DATA_FILES.dd5),
       fetchText(DATA_FILES.dd6),
       fetchText(DATA_FILES.dd8),
-      fetchText(DATA_FILES.executionSheet)
+      fetchText(DATA_FILES.dd9)
     ]);
 
     const dd1 = parseCsv(dd1Text)[0];
@@ -634,7 +634,10 @@ async function renderDashboard() {
     const dd5 = parseCsv(dd5Text)[0];
     const dd6 = parseCsv(dd6Text);
     const dd8 = parseCsv(dd8Text)[0];
-    const executionRows = csvToObjects(executionText);
+    // DD9: header row then one SUMMARY data row
+    // Columns: DUE_OR_OVERDUE,DUE_OVERDUE_PB,FUTURE_DATED,FUTURE_DATED_PB,NO_DATE_YET,NO_DATE_YET_PB
+    // These are computed dynamically: BLOCK_DATE + 15/30 days per usecase type
+    const dd9 = parseCsv(dd9Text)[1]; // skip header, take first data row
 
     const snapshotDateText = document.getElementById('snapshot-note').dataset.asOf;
     const snapshotDate = new Date(`${snapshotDateText}T00:00:00Z`);
@@ -651,10 +654,13 @@ async function renderDashboard() {
     const prior7Deleted = Math.max(parseNumber(totalSinceStart[1]) - parseNumber(last7[1]), 0);
     const prior7Storage = Math.max(parseNumber(totalSinceStart[2]) - parseNumber(last7[2]), 0);
 
-    const datedExecutionRows = executionRows.filter((row) => !/^STATUS_/.test(row.CURRENT_REMEDIATION_STATUS) && row.CURRENT_REMEDIATION_STATUS !== 'SOFT_DELETE');
-    const dueNowCount = datedExecutionRows.filter((row) => parseDate(row.PROPOSED_DELETION_DATE) <= snapshotDate).length;
-    const futureCount = datedExecutionRows.filter((row) => parseDate(row.PROPOSED_DELETION_DATE) > snapshotDate).length;
-    const otherRemainingCount = Math.max(remainingTenants - dueNowCount - futureCount, 0);
+    // Backlog split from DD9 (dynamic block-date computation: BLOCK_DATE + 15 or 30 days)
+    const dueNowCount = parseNumber(dd9[0]);       // deletion window has passed
+    const dueNowPb = parseNumber(dd9[1]);
+    const futureCount = parseNumber(dd9[2]);        // deletion window not yet open
+    const futurePb = parseNumber(dd9[3]);
+    const noDateCount = parseNumber(dd9[4]);        // not yet blocked — no date computable
+    const noDatePb = parseNumber(dd9[5]);
 
     const shownPipelineCount = dd6.reduce((sum, row) => sum + parseNumber(row[1]), 0);
     const shownPipelineStorage = dd6.reduce((sum, row) => sum + parseNumber(row[2]), 0);
@@ -677,12 +683,12 @@ async function renderDashboard() {
     setHtml('remaining-wow', `WoW: <strong>-${formatCount(parseNumber(last7[1]))} tenants</strong> moved out via deletion`);
     setText('remaining-formula', `= In scope (${formatCount(inScopeTenants)}) - Deleted (${formatCount(deletedTenants)})`);
 
-    setText('backlog-breakdown-label', `Backlog breakdown by proposed deletion date (of ${formatCount(remainingTenants)})`);
+    setText('backlog-breakdown-label', `Backlog breakdown — by dynamic deletion window (of ${formatCount(remainingTenants)})`);
     setText('breakdown-due', formatCount(dueNowCount));
     setText('breakdown-future', formatCount(futureCount));
-    setText('breakdown-other', formatCount(otherRemainingCount));
-    setHtml('breakdown-wow', `WoW: <strong>${formatCount(dueNowCount)}</strong> tenants are already due or overdue in the current rollout plan`);
-    setText('breakdown-formula', `${formatCount(dueNowCount)} + ${formatCount(futureCount)} + ${formatCount(otherRemainingCount)} = ${formatCount(remainingTenants)}`);
+    setText('breakdown-other', formatCount(noDateCount));
+    setHtml('breakdown-wow', `<strong>${formatCount(dueNowCount)} tenants overdue</strong> — deletion window (block date + 15/30 days) already passed · ${formatPb(dueNowPb)} storage`);
+    setText('breakdown-formula', `${formatCount(dueNowCount)} overdue + ${formatCount(futureCount)} on-track + ${formatCount(noDateCount)} unschedulable = ${formatCount(remainingTenants)}`);
 
     setText('velocity-last7-deleted', `${formatCount(last7[1])} tenants`);
     setText('velocity-last7-storage', formatStorageForCell(last7[2]));
@@ -707,7 +713,7 @@ async function renderDashboard() {
       parseNumber(row[1]),
       parseNumber(row[2]),
       (parseNumber(row[1]) / maxPipelineCount) * 100
-    )).join('') + buildPipelineBar('Other remaining states', otherPipelineCount, otherPipelineStorage, (otherPipelineCount / maxPipelineCount) * 100);
+    )).join('') + buildPipelineBar('Not yet schedulable (no block date)', otherPipelineCount, otherPipelineStorage, (otherPipelineCount / maxPipelineCount) * 100);
     setHtml('pipeline-bars', pipelineRowsHtml);
     setHtml('pipeline-note', `<strong>Main bottleneck:</strong> <strong>blocked but not scheduled</strong> is still the primary choke point (${formatPb(dd6.find((row) => row[0] === 'BLOCKED_NOT_SCHEDULED')[2])}). The extra ${formatCount(otherPipelineCount)} tenants sit outside the four primary operating buckets.`);
 
@@ -731,7 +737,7 @@ async function renderDashboard() {
     setText('ops-p2-pipeline', `${formatCount(readonlyRow[1])} ReadOnly complete awaiting Block (${formatPb(readonlyRow[2])})`);
     setText('ops-p2-failure', `${dd8[0]}: ${formatCount(dd8[1])} events`);
 
-    setHtml('data-note', '<strong>Data note:</strong> Top-line scope, velocity, source, execution, and stage metrics come from the DD1, DD2, DD4, DD5, DD6, and DD8 CSV outputs. The backlog split at the top is calculated from <strong>PROPOSED_DELETION_DATE</strong> in <strong>Q-TENANT-DELETION-EXECUTION-SHEET.csv</strong>, with opaque STATUS_* rows and SOFT_DELETE excluded from the dated rollout buckets.');
+    setHtml('data-note', '<strong>Data note:</strong> Scope, velocity, source, execution, and stage metrics come from DD1, DD2, DD4, DD5, DD6, DD8 CSVs. The backlog breakdown uses <strong>DD9.csv</strong> — a pre-aggregated summary where the deletion date is computed dynamically as <strong>BLOCK_DATE + 15 days</strong> (for ABUSE-READONLY-BLOCK-DELETE_15DAYS) or <strong>+ 30 days</strong> (all others). Tenants with no block date yet are counted as <em>Not yet schedulable</em>. Re-run the DD9 query after each data refresh to update this file.');
   } catch (error) {
     setHtml('snapshot-note', `<strong>Load error:</strong> ${error.message}. Serve this folder over HTTP so the dashboard can fetch its CSV snapshot files.`);
   }
@@ -741,3 +747,4 @@ renderDashboard();
 </script>
 </body>
 </html>
+
