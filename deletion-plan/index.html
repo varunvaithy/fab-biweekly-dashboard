@@ -350,82 +350,76 @@ body {
   <div class="header">
     <div>
       <h1>Tenant Deletion Plan Dashboard</h1>
+      <div class="sub">CSV snapshot with backlog rollout driven by proposed deletion dates</div>
     </div>
-    <div class="badge">Data mode: CSV snapshot</div>
+    <div class="badge">Data mode: live CSV render</div>
   </div>
 
-  <div style="margin-bottom: 8px; color: var(--muted); font-size: 12px;">
-    Snapshot pulled on <strong>May 6, 2026</strong>. WoW compares current 7-day window vs prior 7-day window.
+  <div id="snapshot-note" style="margin-bottom: 8px; color: var(--muted); font-size: 12px;" data-as-of="2026-05-06">
+    Loading snapshot metrics...
   </div>
 
   <div class="grid-kpi">
       <div class="card">
         <div class="kpi-label">In scope now</div>
         <div class="kpi-pair">
-          <div class="kpi-dual"><div class="unit">Storage</div><div class="val">93.98 PB</div></div>
-          <div class="kpi-dual"><div class="unit">Tenants</div><div class="val">26,059</div></div>
+          <div class="kpi-dual"><div class="unit">Storage</div><div id="in-scope-storage" class="val">--</div></div>
+          <div class="kpi-dual"><div class="unit">Tenants</div><div id="in-scope-tenants" class="val">--</div></div>
         </div>
-        <div class="kpi-wow">WoW: <strong>stable scope</strong> (focus is queue conversion)</div>
+        <div id="in-scope-wow" class="kpi-wow">WoW: <strong>loading</strong></div>
       </div>
       <div class="card">
         <div class="kpi-label">Deleted to date</div>
         <div class="kpi-pair">
-          <div class="kpi-dual"><div class="unit">Storage</div><div class="val" style="color:var(--green);">0.00 PB</div></div>
-          <div class="kpi-dual"><div class="unit">Tenants</div><div class="val" style="color:var(--green);">7</div></div>
+          <div class="kpi-dual"><div class="unit">Storage</div><div id="deleted-storage" class="val" style="color:var(--green);">--</div></div>
+          <div class="kpi-dual"><div class="unit">Tenants</div><div id="deleted-tenants" class="val" style="color:var(--green);">--</div></div>
         </div>
-        <div class="kpi-wow">Started in <strong>March week-4 (Monday onward)</strong>. WoW: <strong>+6 tenants deleted</strong> vs prior 7 days</div>
+        <div id="deleted-wow" class="kpi-wow">WoW: <strong>loading</strong></div>
       </div>
       <div class="card">
         <div class="kpi-label">Remaining backlog (needs deletion)</div>
         <div class="kpi-pair">
-          <div class="kpi-dual"><div class="unit">Storage</div><div class="val">93.98 PB</div></div>
-          <div class="kpi-dual"><div class="unit">Tenants</div><div class="val">26,052</div></div>
+          <div class="kpi-dual"><div class="unit">Storage</div><div id="remaining-storage" class="val">--</div></div>
+          <div class="kpi-dual"><div class="unit">Tenants</div><div id="remaining-tenants" class="val">--</div></div>
         </div>
-        <div class="kpi-wow">WoW: <strong>-6 tenants</strong> moved out via deletion</div>
-        <div class="kpi-formula">= In scope (26,059) - Deleted (7)</div>
+        <div id="remaining-wow" class="kpi-wow">WoW: <strong>loading</strong></div>
+        <div id="remaining-formula" class="kpi-formula">--</div>
       </div>
       <div class="card">
-        <div class="kpi-label">Backlog breakdown (of 26,052)</div>
+        <div id="backlog-breakdown-label" class="kpi-label">Backlog breakdown</div>
         <div class="kpi-pair">
-          <div class="kpi-dual"><div class="unit">1) Overdue in scheduled-delete queue</div><div class="val" style="color:var(--red);">14</div></div>
-          <div class="kpi-dual"><div class="unit">2) Not yet overdue / not yet scheduled</div><div class="val" style="color:var(--amber);">26,038</div></div>
+          <div class="kpi-dual"><div class="unit">Due now or overdue</div><div id="breakdown-due" class="val" style="color:var(--red);">--</div></div>
+          <div class="kpi-dual"><div class="unit">Future-dated in rollout plan</div><div id="breakdown-future" class="val" style="color:var(--primary);">--</div></div>
+          <div class="kpi-dual"><div class="unit">Other remaining states</div><div id="breakdown-other" class="val" style="color:var(--slate);">--</div></div>
         </div>
-        <div class="kpi-wow">Definition note: this overdue count is from the currently scheduled-delete queue; it does not include blocked-unscheduled backlog.</div>
-        <div class="kpi-formula">14 (scheduled + overdue) + 26,038 (remaining backlog) = 26,052</div>
+        <div id="breakdown-wow" class="kpi-wow">WoW: <strong>loading</strong></div>
+        <div id="breakdown-formula" class="kpi-formula">--</div>
       </div>
   </div>
 
   <div class="row-tight">
     <div class="card">
       <h3 class="section-title">Overall Delete Velocity</h3>
-      <div class="muted">Count-first throughput. Storage can stay near-zero early when low-storage tenants are deleted first.</div>
+      <div class="muted">Count-first throughput since deletion start on May 4. Storage can stay near-zero early when low-storage tenants are deleted first.</div>
       <table class="table" style="font-size: 11px;">
-          <thead><tr><th>Window</th><th>Deleted</th><th>Storage</th><th>Run rate</th><th>Context</th></tr></thead>
+          <thead><tr><th>Window</th><th>Deleted</th><th>Storage</th><th>Run rate</th><th>WoW</th></tr></thead>
         <tbody>
-            <tr><td><strong>Last 7 days</strong></td><td>6 tenants</td><td>0.00 PB (&lt;5 TB)</td><td>6.00 tenants/week</td><td><span class="pill ok">Current</span></td></tr>
-            <tr><td><strong>Prior 7 days</strong></td><td>0 tenants</td><td>0.00 PB</td><td>0.00 tenants/week</td><td><span class="pill ok">+6 tenants</span></td></tr>
-            <tr><td><strong>Total since deletion start (March week-4)</strong></td><td>7 tenants</td><td>0.00 PB (&lt;5 TB)</td><td>0.26 tenants/week</td><td><span class="pill warn">Early phase</span></td></tr>
+            <tr><td><strong>Last 7 days</strong></td><td id="velocity-last7-deleted">--</td><td id="velocity-last7-storage">--</td><td id="velocity-last7-rate">--</td><td><span class="pill ok">Current</span></td></tr>
+            <tr><td><strong>Prior 7 days</strong></td><td id="velocity-prior7-deleted">--</td><td id="velocity-prior7-storage">--</td><td id="velocity-prior7-rate">--</td><td id="velocity-prior7-wow">--</td></tr>
+            <tr><td><strong>Total since deletion start</strong></td><td id="velocity-total-deleted">--</td><td id="velocity-total-storage">--</td><td id="velocity-total-rate">--</td><td><span class="pill warn">Since May 4</span></td></tr>
         </tbody>
       </table>
-      <div class="backend" style="margin-top:12px;">
-          <strong>Window note:</strong> totals are anchored to deletion start in March week-4 (Monday onward). <strong>Nuance:</strong> reclaimed PB may stay near-zero early if deleted tenants are mostly low-storage.
+      <div id="velocity-note" class="backend" style="margin-top:12px;">
+          <strong>Nuance:</strong> loading...
       </div>
     </div>
 
     <div class="card">
       <h3 class="section-title">Where Backlog Is Stuck</h3>
-      <div class="muted">Storage-weighted queue view to highlight the highest-leverage operating step.</div>
-      <table class="table" style="font-size: 11px;">
-        <thead><tr><th>Queue stage</th><th>Tenants</th><th>Storage</th><th>What this means</th></tr></thead>
-        <tbody>
-          <tr><td><strong>Blocked, not scheduled</strong></td><td>17,669</td><td>88.99 PB</td><td>Main bottleneck. These are ready to be moved into delete scheduling.</td></tr>
-          <tr><td><strong>ReadOnly complete, awaiting Block</strong></td><td>7,965</td><td>4.16 PB</td><td>Secondary queue. Needs block completion before delete scheduling.</td></tr>
-          <tr><td><strong>ReadOnly in progress</strong></td><td>351</td><td>0.49 PB</td><td>Earlier pipeline stage; monitor conversion into blocked.</td></tr>
-          <tr><td><strong>Delete scheduled, not done</strong></td><td>16</td><td>0.06 PB</td><td>Execution tail. Includes the currently overdue scheduled items.</td></tr>
-        </tbody>
-      </table>
-      <div class="backend" style="margin-top:12px;">
-        <strong>Priority order:</strong> 1) convert blocked-unscheduled into scheduled deletes, 2) close overdue scheduled deletes, 3) keep ReadOnly-to-Block flow moving.
+      <div class="muted">Stage view of the same backlog. This cut shows operating choke points rather than due-date timing.</div>
+      <div id="pipeline-bars" class="mini-bars"></div>
+      <div id="pipeline-note" class="backend" style="margin-top:12px;">
+        <strong>Main bottleneck:</strong> loading...
       </div>
     </div>
   </div>
@@ -435,13 +429,13 @@ body {
       <h3 class="section-title">Delete Execution Metrics</h3>
       <div class="muted">Compact execution snapshot (last 14 days)</div>
       <div class="small-grid">
-        <div class="metric-box"><div class="title">Attempts scheduled</div><div class="num">20</div></div>
-        <div class="metric-box"><div class="title">Succeeded (30%)</div><div class="num" style="color:var(--green);">6</div></div>
-        <div class="metric-box"><div class="title">Failed (0%)</div><div class="num" style="color:var(--red);">0</div></div>
-        <div class="metric-box"><div class="title">Pending (70%)</div><div class="num" style="color:var(--amber);">14</div></div>
+        <div class="metric-box"><div class="title">Attempts scheduled</div><div id="exec-attempts" class="num">--</div></div>
+        <div class="metric-box"><div id="exec-success-title" class="title">Succeeded</div><div id="exec-successes" class="num" style="color:var(--green);">--</div></div>
+        <div class="metric-box"><div id="exec-failure-title" class="title">Failed</div><div id="exec-failures" class="num" style="color:var(--red);">--</div></div>
+        <div class="metric-box"><div id="exec-pending-title" class="title">Pending</div><div id="exec-pending" class="num" style="color:var(--amber);">--</div></div>
       </div>
-      <div class="backend">
-        <strong>Signal:</strong> execution lag (pending queue) is the issue, not hard failures.
+      <div id="exec-note" class="backend">
+        <strong>Signal:</strong> loading...
       </div>
     </div>
 
@@ -450,49 +444,300 @@ body {
       <div class="muted">Focus on where remaining storage is concentrated</div>
       <table class="table" style="font-size: 11px;">
         <thead><tr><th>Source</th><th>Remaining</th><th>Deleted</th><th>Ready</th></tr></thead>
-        <tbody>
-          <tr><td><strong>R4</strong></td><td>29.19 PB</td><td>0 / 0.00 PB</td><td>0 / 0.00 PB</td></tr>
-          <tr><td><strong>DS Model (2026)</strong></td><td>15.07 PB</td><td>0 / 0.00 PB</td><td>0 / 0.00 PB</td></tr>
-          <tr><td><strong>R2</strong></td><td>13.72 PB</td><td>0 / 0.00 PB</td><td>0 / 0.00 PB</td></tr>
-          <tr><td><strong>R3</strong></td><td>11.01 PB</td><td>0 / 0.00 PB</td><td>0 / 0.00 PB</td></tr>
-          <tr><td><strong>R0</strong></td><td>8.68 PB</td><td>6 / 0.00 PB</td><td>14 / 0.00 PB</td></tr>
-        </tbody>
+        <tbody id="source-table-body"></tbody>
       </table>
-      <div class="backend">
-        Storage reclaim will remain low until deletes move from R0-heavy low-storage tenants into high-storage R4/R2/R3 cohorts.
+      <div id="source-note" class="backend">
+        Loading source concentration...
       </div>
     </div>
   </div>
 
   <div class="card">
-    <h3 class="section-title">Recent Week Challenges & Insights</h3>
+    <h3 class="section-title">Operations Queue (High Signal)</h3>
     <div class="ops-grid">
       <div class="ops-item">
-        <div class="ops-title">Challenge: overdue deletes</div>
-        14 tenants in the scheduled-delete queue have passed due date and remain pending.<br><span class="tag overdue">Highest priority execution queue</span>
+        <div class="ops-title">P1 Queue</div>
+        <span id="ops-p1-queue">--</span><br><span class="tag overdue">Drain scheduler queue</span>
       </div>
       <div class="ops-item">
-        <div class="ops-title">Challenge: pipeline conversion</div>
-        17,669 blocked-unscheduled tenants (88.99 PB) still dominate backlog.<br><span class="tag overdue">Main bottleneck</span>
+        <div class="ops-title">P1 Pipeline</div>
+        <span id="ops-p1-pipeline">--</span><br><span class="tag overdue">Bulk schedule expansion</span>
       </div>
       <div class="ops-item">
-        <div class="ops-title">Insight: weekly momentum</div>
-        Deletions improved to 6 tenants in the last 7 days vs 0 in prior 7 days.<br><span class="tag pending">Count trend improving</span>
+        <div class="ops-title">P2 Pipeline</div>
+        <span id="ops-p2-pipeline">--</span><br><span class="tag pending">Accelerate block completion</span>
       </div>
       <div class="ops-item">
-        <div class="ops-title">Insight: quality signal</div>
-        0 hard delete failures in DD5; issue is queue delay, not execution reliability.<br><span class="tag pending">Focus on scheduling throughput</span>
+        <div class="ops-title">P2 Failure Signal</div>
+        <span id="ops-p2-failure">--</span><br><span class="tag pending">Classify root causes</span>
       </div>
     </div>
     <div class="backend">
-      <strong>How to read this:</strong> resolve overdue scheduled deletes first, then reduce the blocked-unscheduled queue (largest storage impact).
+      <strong>One-page readout:</strong> compare the due-date split at the top with the stage choke points and the last 7 days throughput row.
     </div>
   </div>
 
-  <div class="backend">
-    <strong>Data note:</strong> The dashboard intentionally displays tenant deletion count and reclaimed storage as separate signals. When deleted tenants are low-storage, storage may round to <strong>0.00 PB</strong> even as deletion count increases.
+  <div id="data-note" class="backend">
+    <strong>Data note:</strong> loading...
   </div>
 </div>
+<script>
+const DATA_FILES = {
+  dd1: 'Results for Dashboard/DD1.csv',
+  dd2: 'Results for Dashboard/DD2.csv',
+  dd4: 'Results for Dashboard/DD4.csv',
+  dd5: 'Results for Dashboard/DD5.csv',
+  dd6: 'Results for Dashboard/DD6.csv',
+  dd8: 'Results for Dashboard/DD8.csv',
+  executionSheet: 'Output/Q-TENANT-DELETION-EXECUTION-SHEET.csv'
+};
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let value = '';
+  let inQuotes = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        value += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if (char === ',' && !inQuotes) {
+      row.push(value);
+      value = '';
+      continue;
+    }
+    if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (char === '\r' && next === '\n') {
+        index += 1;
+      }
+      row.push(value);
+      if (row.some((cell) => cell !== '')) {
+        rows.push(row);
+      }
+      row = [];
+      value = '';
+      continue;
+    }
+    value += char;
+  }
+  if (value.length || row.length) {
+    row.push(value);
+    if (row.some((cell) => cell !== '')) {
+      rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function csvToObjects(text) {
+  const rows = parseCsv(text);
+  const [header, ...body] = rows;
+  return body.map((row) => {
+    const item = {};
+    header.forEach((name, index) => {
+      item[name] = row[index] ?? '';
+    });
+    return item;
+  });
+}
+
+function formatCount(value) {
+  return Number(value || 0).toLocaleString('en-US');
+}
+
+function formatPb(value) {
+  return `${Number(value || 0).toFixed(2)} PB`;
+}
+
+function formatStorageForCell(value) {
+  const numeric = Number(value || 0);
+  if (numeric === 0) {
+    return '0.00 PB';
+  }
+  return numeric < 0.01 ? '0.00 PB (<5 TB)' : `${numeric.toFixed(2)} PB`;
+}
+
+function formatRate(value) {
+  return `${Number(value || 0).toFixed(2)} tenants/week`;
+}
+
+function parseNumber(value) {
+  return Number.parseFloat(value || '0');
+}
+
+function parseDate(value) {
+  if (!value || value === 'NULL') {
+    return null;
+  }
+  return new Date(`${value}T00:00:00Z`);
+}
+
+function setText(id, text) {
+  document.getElementById(id).textContent = text;
+}
+
+function setHtml(id, html) {
+  document.getElementById(id).innerHTML = html;
+}
+
+function buildPipelineBar(label, count, storagePb, widthPct) {
+  return `
+    <div class="mini-row">
+      <div class="label">${label}</div>
+      <div class="barbg"><div class="barfill" style="width:${Math.max(widthPct, 1)}%;"></div></div>
+      <div class="meta">${formatCount(count)} | ${formatPb(storagePb)}</div>
+    </div>`;
+}
+
+async function fetchText(path) {
+  const response = await fetch(path, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Failed to load ${path}`);
+  }
+  return response.text();
+}
+
+function renderSourceTable(rows) {
+  const body = document.getElementById('source-table-body');
+  body.innerHTML = rows.slice(0, 5).map((row) => `
+    <tr>
+      <td><strong>${row[0]}</strong></td>
+      <td>${formatPb(row[4])}</td>
+      <td>${formatCount(row[1])} / ${formatPb(row[2])}</td>
+      <td>${formatCount(row[5])} / ${formatPb(row[6])}</td>
+    </tr>`).join('');
+}
+
+async function renderDashboard() {
+  try {
+    const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, executionText] = await Promise.all([
+      fetchText(DATA_FILES.dd1),
+      fetchText(DATA_FILES.dd2),
+      fetchText(DATA_FILES.dd4),
+      fetchText(DATA_FILES.dd5),
+      fetchText(DATA_FILES.dd6),
+      fetchText(DATA_FILES.dd8),
+      fetchText(DATA_FILES.executionSheet)
+    ]);
+
+    const dd1 = parseCsv(dd1Text)[0];
+    const dd2 = parseCsv(dd2Text);
+    const dd4 = parseCsv(dd4Text);
+    const dd5 = parseCsv(dd5Text)[0];
+    const dd6 = parseCsv(dd6Text);
+    const dd8 = parseCsv(dd8Text)[0];
+    const executionRows = csvToObjects(executionText);
+
+    const snapshotDateText = document.getElementById('snapshot-note').dataset.asOf;
+    const snapshotDate = new Date(`${snapshotDateText}T00:00:00Z`);
+
+    const inScopeTenants = parseNumber(dd1[0]);
+    const inScopeStorage = parseNumber(dd1[1]);
+    const deletedTenants = parseNumber(dd1[2]);
+    const deletedStorage = parseNumber(dd1[3]);
+    const remainingTenants = parseNumber(dd1[4]);
+    const remainingStorage = parseNumber(dd1[5]);
+
+    const last7 = dd2.find((row) => row[0] === 'Last 7 days');
+    const totalSinceStart = dd2.find((row) => row[0] === 'Since scope start');
+    const prior7Deleted = Math.max(parseNumber(totalSinceStart[1]) - parseNumber(last7[1]), 0);
+    const prior7Storage = Math.max(parseNumber(totalSinceStart[2]) - parseNumber(last7[2]), 0);
+
+    const datedExecutionRows = executionRows.filter((row) => !/^STATUS_/.test(row.CURRENT_REMEDIATION_STATUS) && row.CURRENT_REMEDIATION_STATUS !== 'SOFT_DELETE');
+    const dueNowCount = datedExecutionRows.filter((row) => parseDate(row.PROPOSED_DELETION_DATE) <= snapshotDate).length;
+    const futureCount = datedExecutionRows.filter((row) => parseDate(row.PROPOSED_DELETION_DATE) > snapshotDate).length;
+    const otherRemainingCount = Math.max(remainingTenants - dueNowCount - futureCount, 0);
+
+    const shownPipelineCount = dd6.reduce((sum, row) => sum + parseNumber(row[1]), 0);
+    const shownPipelineStorage = dd6.reduce((sum, row) => sum + parseNumber(row[2]), 0);
+    const otherPipelineCount = Math.max(remainingTenants - shownPipelineCount, 0);
+    const otherPipelineStorage = Math.max(remainingStorage - shownPipelineStorage, 0);
+    const maxPipelineCount = Math.max(...dd6.map((row) => parseNumber(row[1])), otherPipelineCount, 1);
+
+    setHtml('snapshot-note', `Snapshot pulled on <strong>${snapshotDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</strong>. WoW compares the current 7-day delete window vs the prior 7-day window.`);
+
+    setText('in-scope-storage', formatPb(inScopeStorage));
+    setText('in-scope-tenants', formatCount(inScopeTenants));
+    setHtml('in-scope-wow', 'WoW: <strong>stable scope</strong> (focus is queue conversion)');
+
+    setText('deleted-storage', formatPb(deletedStorage));
+    setText('deleted-tenants', formatCount(deletedTenants));
+    setHtml('deleted-wow', `WoW: <strong>+${formatCount(parseNumber(last7[1]))} tenants deleted</strong> vs prior 7 days`);
+
+    setText('remaining-storage', formatPb(remainingStorage));
+    setText('remaining-tenants', formatCount(remainingTenants));
+    setHtml('remaining-wow', `WoW: <strong>-${formatCount(parseNumber(last7[1]))} tenants</strong> moved out via deletion`);
+    setText('remaining-formula', `= In scope (${formatCount(inScopeTenants)}) - Deleted (${formatCount(deletedTenants)})`);
+
+    setText('backlog-breakdown-label', `Backlog breakdown by proposed deletion date (of ${formatCount(remainingTenants)})`);
+    setText('breakdown-due', formatCount(dueNowCount));
+    setText('breakdown-future', formatCount(futureCount));
+    setText('breakdown-other', formatCount(otherRemainingCount));
+    setHtml('breakdown-wow', `WoW: <strong>${formatCount(dueNowCount)}</strong> tenants are already due or overdue in the current rollout plan`);
+    setText('breakdown-formula', `${formatCount(dueNowCount)} + ${formatCount(futureCount)} + ${formatCount(otherRemainingCount)} = ${formatCount(remainingTenants)}`);
+
+    setText('velocity-last7-deleted', `${formatCount(last7[1])} tenants`);
+    setText('velocity-last7-storage', formatStorageForCell(last7[2]));
+    setText('velocity-last7-rate', formatRate(last7[3]));
+    setText('velocity-prior7-deleted', `${formatCount(prior7Deleted)} tenants`);
+    setText('velocity-prior7-storage', formatStorageForCell(prior7Storage));
+    setText('velocity-prior7-rate', formatRate(prior7Deleted));
+    setHtml('velocity-prior7-wow', `<span class="pill ok">+${formatCount(parseNumber(last7[1]) - prior7Deleted)} tenants</span>`);
+    setText('velocity-total-deleted', `${formatCount(totalSinceStart[1])} tenants`);
+    setText('velocity-total-storage', formatStorageForCell(totalSinceStart[2]));
+    setText('velocity-total-rate', formatRate(totalSinceStart[3]));
+    setHtml('velocity-note', '<strong>Nuance:</strong> this snapshot shows low or near-zero reclaimed PB while deletion counts are increasing. That is expected when the current deleted set is mostly low-storage tenants.');
+
+    const pipelineLabels = {
+      DELETE_SCHEDULED_NOT_DONE: 'Delete scheduled, not done',
+      BLOCKED_NOT_SCHEDULED: 'Blocked, not scheduled',
+      READONLY_COMPLETE_AWAITING_BLOCK: 'ReadOnly complete - awaiting Block',
+      READONLY_IN_PROGRESS: 'ReadOnly in progress'
+    };
+    const pipelineRowsHtml = dd6.map((row) => buildPipelineBar(
+      pipelineLabels[row[0]] || row[0],
+      parseNumber(row[1]),
+      parseNumber(row[2]),
+      (parseNumber(row[1]) / maxPipelineCount) * 100
+    )).join('') + buildPipelineBar('Other remaining states', otherPipelineCount, otherPipelineStorage, (otherPipelineCount / maxPipelineCount) * 100);
+    setHtml('pipeline-bars', pipelineRowsHtml);
+    setHtml('pipeline-note', `<strong>Main bottleneck:</strong> <strong>blocked but not scheduled</strong> is still the primary choke point (${formatPb(dd6.find((row) => row[0] === 'BLOCKED_NOT_SCHEDULED')[2])}). The extra ${formatCount(otherPipelineCount)} tenants sit outside the four primary operating buckets.`);
+
+    setText('exec-attempts', formatCount(dd5[0]));
+    setText('exec-successes', formatCount(dd5[1]));
+    setText('exec-failures', formatCount(dd5[2]));
+    setText('exec-pending', formatCount(dd5[3]));
+    setText('exec-success-title', `Succeeded (${parseNumber(dd5[4]).toFixed(0)}%)`);
+    setText('exec-failure-title', `Failed (${parseNumber(dd5[5]).toFixed(0)}%)`);
+    setText('exec-pending-title', `Pending (${parseNumber(dd5[6]).toFixed(0)}%)`);
+    setHtml('exec-note', '<strong>Signal:</strong> execution lag in the scheduled queue is the issue, not hard failures.');
+
+    renderSourceTable(dd4);
+    setHtml('source-note', 'Storage reclaim will remain low until deletes move from the current R0-heavy low-storage set into the higher-storage R4, R2, and R3 cohorts.');
+
+    const blockedRow = dd6.find((row) => row[0] === 'BLOCKED_NOT_SCHEDULED');
+    const readonlyRow = dd6.find((row) => row[0] === 'READONLY_COMPLETE_AWAITING_BLOCK');
+    const scheduledRow = dd6.find((row) => row[0] === 'DELETE_SCHEDULED_NOT_DONE');
+    setText('ops-p1-queue', `${formatCount(dd5[3])} pending scheduled attempts (${formatPb(scheduledRow[2])})`);
+    setText('ops-p1-pipeline', `${formatCount(blockedRow[1])} blocked unscheduled (${formatPb(blockedRow[2])})`);
+    setText('ops-p2-pipeline', `${formatCount(readonlyRow[1])} ReadOnly complete awaiting Block (${formatPb(readonlyRow[2])})`);
+    setText('ops-p2-failure', `${dd8[0]}: ${formatCount(dd8[1])} events`);
+
+    setHtml('data-note', '<strong>Data note:</strong> Top-line scope, velocity, source, execution, and stage metrics come from the DD1, DD2, DD4, DD5, DD6, and DD8 CSV outputs. The backlog split at the top is calculated from <strong>PROPOSED_DELETION_DATE</strong> in <strong>Q-TENANT-DELETION-EXECUTION-SHEET.csv</strong>, with opaque STATUS_* rows and SOFT_DELETE excluded from the dated rollout buckets.');
+  } catch (error) {
+    setHtml('snapshot-note', `<strong>Load error:</strong> ${error.message}. Serve this folder over HTTP so the dashboard can fetch its CSV snapshot files.`);
+  }
+}
+
+renderDashboard();
+</script>
 </body>
 </html>
-
