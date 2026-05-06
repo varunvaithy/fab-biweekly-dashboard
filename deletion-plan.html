@@ -388,12 +388,11 @@ body {
       <div class="card">
         <div class="kpi-label">Backlog breakdown (of 26,052)</div>
         <div class="kpi-pair">
-          <div class="kpi-dual"><div class="unit">Ready now (scheduled, not done)</div><div class="val" style="color:var(--primary);">16</div></div>
-          <div class="kpi-dual"><div class="unit">In active pipeline</div><div class="val" style="color:var(--amber);">25,985</div></div>
-          <div class="kpi-dual"><div class="unit">Other remaining states</div><div class="val" style="color:var(--slate);">51</div></div>
+          <div class="kpi-dual"><div class="unit">1) Stalled / overdue (highest priority)</div><div class="val" style="color:var(--red);">14</div></div>
+          <div class="kpi-dual"><div class="unit">2) On-track (standard remediation timeline)</div><div class="val" style="color:var(--amber);">26,038</div></div>
         </div>
-        <div class="kpi-wow">WoW: <strong>bottleneck unchanged</strong> (blocked-not-scheduled still dominant)</div>
-        <div class="kpi-formula">16 + 25,985 + 51 = 26,052</div>
+        <div class="kpi-wow">Overdue tenants are sorted to the front of the June deletion queue.</div>
+        <div class="kpi-formula">14 (stalled/overdue) + 26,038 (on-track) = 26,052</div>
       </div>
   </div>
 
@@ -480,27 +479,27 @@ body {
   </div>
 
   <div class="card">
-    <h3 class="section-title">Operations Queue (High Signal)</h3>
+    <h3 class="section-title">Recent Week Challenges & Insights</h3>
     <div class="ops-grid">
       <div class="ops-item">
-        <div class="ops-title">P1 Queue</div>
-        14 due attempts pending (0.06 PB)<br><span class="tag overdue">Drain scheduler queue</span>
+        <div class="ops-title">Challenge: overdue deletes</div>
+        14 tenants have passed scheduled delete date and remain pending.<br><span class="tag overdue">Highest priority in June queue</span>
       </div>
       <div class="ops-item">
-        <div class="ops-title">P1 Pipeline</div>
-        17,669 blocked unscheduled (88.99 PB)<br><span class="tag overdue">Bulk schedule expansion</span>
+        <div class="ops-title">Challenge: pipeline conversion</div>
+        17,669 blocked-unscheduled tenants (88.99 PB) still dominate backlog.<br><span class="tag overdue">Main bottleneck</span>
       </div>
       <div class="ops-item">
-        <div class="ops-title">P2 Pipeline</div>
-        7,965 ReadOnly complete awaiting Block (4.16 PB)<br><span class="tag pending">Accelerate block completion</span>
+        <div class="ops-title">Insight: weekly momentum</div>
+        Deletions improved to 6 tenants in the last 7 days vs 0 in prior 7 days.<br><span class="tag pending">Count trend improving</span>
       </div>
       <div class="ops-item">
-        <div class="ops-title">P2 Failure Signal</div>
-        FAILED_OTHER: 4 events<br><span class="tag pending">Classify root causes</span>
+        <div class="ops-title">Insight: quality signal</div>
+        0 hard delete failures in DD5; issue is queue delay, not execution reliability.<br><span class="tag pending">Focus on scheduling throughput</span>
       </div>
     </div>
     <div class="backend">
-      <strong>One-page readout:</strong> compare the top backlog cards and the Last 7 days row week-over-week.
+      <strong>How to read this:</strong> prioritize stalled/overdue first, then improve on-track conversion by moving blocked-unscheduled tenants into scheduled deletes.
     </div>
   </div>
 
