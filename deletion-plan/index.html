@@ -740,11 +740,11 @@ async function renderDashboard() {
     renderSourceTable(dd4);
     setHtml('source-note', 'Tenant deletion velocity accelerates when deletions shift from low-storage R0 tenants to higher-storage cohorts (R4, R2, R3). Track both tenant count and storage reclaim to see progress on both axes.');
 
-    const blockedRow = dd6.find((row) => row[0] === 'BLOCKED_NOT_SCHEDULED');
+    const opsBlockedRow = dd6.find((row) => row[0] === 'BLOCKED_NOT_SCHEDULED');
     const readonlyRow = dd6.find((row) => row[0] === 'READONLY_COMPLETE_AWAITING_BLOCK');
-    const scheduledRow = dd6.find((row) => row[0] === 'DELETE_SCHEDULED_NOT_DONE');
-    setText('ops-p1-queue', `${formatCount(dd5[3])} pending scheduled attempts (${formatPb(scheduledRow[2])})`);
-    setText('ops-p1-pipeline', `${formatCount(blockedRow[1])} blocked unscheduled (${formatPb(blockedRow[2])})`);
+    const opsScheduledRow = dd6.find((row) => row[0] === 'DELETE_SCHEDULED_NOT_DONE');
+    setText('ops-p1-queue', `${formatCount(dd5[3])} pending scheduled attempts (${formatPb(opsScheduledRow[2])})`);
+    setText('ops-p1-pipeline', `${formatCount(opsBlockedRow[1])} blocked unscheduled (${formatPb(opsBlockedRow[2])})`);
     setText('ops-p2-pipeline', `${formatCount(readonlyRow[1])} ReadOnly complete awaiting Block (${formatPb(readonlyRow[2])})`);
     setText('ops-p2-failure', `${dd8[0]}: ${formatCount(dd8[1])} events`);
 
