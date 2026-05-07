@@ -604,6 +604,18 @@ function summarizeDd9(rows, remainingTenants, remainingStorage, snapshotDate) {
     };
   }
 
+  const summaryRow = rows.find((row) => row[0] === 'SUMMARY');
+  if (summaryRow) {
+    return {
+      dueNowCount: parseNumber(summaryRow[5]),
+      dueNowPb: parseNumber(summaryRow[6]),
+      futureCount: parseNumber(summaryRow[7]),
+      futurePb: parseNumber(summaryRow[8]),
+      noDateCount: parseNumber(summaryRow[9]),
+      noDatePb: parseNumber(summaryRow[10])
+    };
+  }
+
   let dueNowCount = 0;
   let dueNowPb = 0;
   let futureCount = 0;
@@ -614,6 +626,9 @@ function summarizeDd9(rows, remainingTenants, remainingStorage, snapshotDate) {
   let explicitNoDatePb = 0;
 
   rows.forEach((row) => {
+    if (row[0] === 'SUMMARY') {
+      return;
+    }
     const count = parseNumber(row[3]);
     const storagePb = parseNumber(row[4]);
     const startDate = parseDate(row[1]);
