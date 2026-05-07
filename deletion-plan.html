@@ -388,9 +388,9 @@ body {
       <div class="card">
         <div id="backlog-breakdown-label" class="kpi-label">Backlog breakdown</div>
         <div class="kpi-pair">
-          <div class="kpi-dual"><div class="unit">Overdue (deletion window passed)</div><div id="breakdown-due" class="val" style="color:var(--red);">--</div></div>
-          <div class="kpi-dual"><div class="unit">On track (deletion window upcoming)</div><div id="breakdown-future" class="val" style="color:var(--primary);">--</div></div>
-          <div class="kpi-dual"><div class="unit">Not yet schedulable (no block date)</div><div id="breakdown-other" class="val" style="color:var(--slate);">--</div></div>
+          <div class="kpi-dual"><div class="unit" title="These tenants should already be deleted. Their expected delete date is in the past.">Overdue (deletion window passed)</div><div id="breakdown-due" class="val" style="color:var(--red);">--</div></div>
+          <div class="kpi-dual"><div class="unit" title="These tenants have a valid future delete date and are still within timeline.">On track (deletion window upcoming)</div><div id="breakdown-future" class="val" style="color:var(--primary);">--</div></div>
+          <div class="kpi-dual"><div class="unit" title="These tenants do not have a schedulable delete date yet, usually because block is not completed.">Not yet schedulable (no block date)</div><div id="breakdown-other" class="val" style="color:var(--slate);">--</div></div>
         </div>
         <div id="breakdown-wow" class="kpi-wow">WoW: <strong>loading</strong></div>
         <div id="breakdown-formula" class="kpi-formula">--</div>
