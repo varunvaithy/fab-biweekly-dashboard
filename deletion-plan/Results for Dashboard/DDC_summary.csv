@@ -1,0 +1,6 @@
+﻿CHANGE_TYPE,TENANT_COUNT,STORAGE_GB_TOTAL,STORAGE_PB_TOTAL,NOTES
+NEWLY_DELETED,184,55,0.0001,Tenants whose DELETE action completed in this window. Backlog shrinks by this count.
+DELETE_SCHEDULED,503,55007.73,0.0525,Tenants that entered the delete queue for the first time. Execution backlog grows by this count.
+BLOCK_COMPLETED,1490,2265828.23,2.1609,Tenants that completed the Block step. Now schedulable; delete window opened.
+READONLY_COMPLETED,16,258921.5,0.2469,Tenants that completed ReadOnly. Now awaiting Block before they can be scheduled.
+NEW_IN_SCOPE,15,266468.98,0.2541,Net-new tenants identified as fraud candidates since last run. New deletion candidates.

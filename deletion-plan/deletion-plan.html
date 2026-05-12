@@ -477,6 +477,32 @@ body {
     </div>
   </div>
 
+  <div class="row-tight">
+    <div class="card">
+      <h3 class="section-title">Since Last Run (DDC Summary)</h3>
+      <div class="muted">Change events captured between last run and now (same rolling window as DDC queries)</div>
+      <table class="table" style="font-size: 11px;">
+        <thead><tr><th>Change type</th><th>Tenants</th><th>Storage (GB)</th><th>Notes</th></tr></thead>
+        <tbody id="ddc-summary-body"></tbody>
+      </table>
+      <div id="ddc-summary-note" class="backend">
+        <strong>DDC:</strong> loading...
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title">Recent Change Events (DDC Detail)</h3>
+      <div class="muted">Most recent per-tenant events from the DDC_DETAIL output (top 12)</div>
+      <table class="table" style="font-size: 11px;">
+        <thead><tr><th>Date</th><th>Type</th><th>Tenant</th><th>Stage</th><th>Storage (GB)</th></tr></thead>
+        <tbody id="ddc-detail-body"></tbody>
+      </table>
+      <div id="ddc-detail-note" class="backend">
+        <strong>DDC detail:</strong> loading...
+      </div>
+    </div>
+  </div>
+
   <div id="data-note" class="backend">
     <strong>Data note:</strong> loading...
   </div>
@@ -489,7 +515,9 @@ const DATA_FILES = {
   dd5: 'Results for Dashboard/DD5.csv',
   dd6: 'Results for Dashboard/DD6.csv',
   dd8: 'Results for Dashboard/DD8.csv',
-  dd9: 'Results for Dashboard/DD9.csv'
+  dd9: 'Results for Dashboard/DD9.csv',
+  ddcSummary: 'Results for Dashboard/DDC_summary.csv',
+  ddcDetail: 'Results for Dashboard/DDC_details.csv'
 };
 
 function parseCsv(text) {
@@ -580,89 +608,6 @@ function parseDate(value) {
   return new Date(`${value}T00:00:00Z`);
 }
 
-function summarizeDd9(rows, remainingTenants, remainingStorage, snapshotDate) {
-  if (!rows.length) {
-    return {
-      dueNowCount: 0,
-      dueNowPb: 0,
-      futureCount: 0,
-      futurePb: 0,
-      noDateCount: remainingTenants,
-      noDatePb: remainingStorage
-    };
-  }
-
-  if (rows[0][0] === 'DUE_OR_OVERDUE') {
-    const summaryRow = rows[1] ?? [];
-    return {
-      dueNowCount: parseNumber(summaryRow[0]),
-      dueNowPb: parseNumber(summaryRow[1]),
-      futureCount: parseNumber(summaryRow[2]),
-      futurePb: parseNumber(summaryRow[3]),
-      noDateCount: parseNumber(summaryRow[4]),
-      noDatePb: parseNumber(summaryRow[5])
-    };
-  }
-
-  const summaryRow = rows.find((row) => row[0] === 'SUMMARY');
-  if (summaryRow) {
-    return {
-      dueNowCount: parseNumber(summaryRow[5]),
-      dueNowPb: parseNumber(summaryRow[6]),
-      futureCount: parseNumber(summaryRow[7]),
-      futurePb: parseNumber(summaryRow[8]),
-      noDateCount: parseNumber(summaryRow[9]),
-      noDatePb: parseNumber(summaryRow[10])
-    };
-  }
-
-  let dueNowCount = 0;
-  let dueNowPb = 0;
-  let futureCount = 0;
-  let futurePb = 0;
-  let datedCount = 0;
-  let datedPb = 0;
-  let explicitNoDateCount = 0;
-  let explicitNoDatePb = 0;
-
-  rows.forEach((row) => {
-    if (row[0] === 'SUMMARY') {
-      return;
-    }
-    const count = parseNumber(row[3]);
-    const storagePb = parseNumber(row[4]);
-    const startDate = parseDate(row[1]);
-    const endDate = parseDate(row[2]);
-
-    if (!startDate || !endDate) {
-      explicitNoDateCount += count;
-      explicitNoDatePb += storagePb;
-      return;
-    }
-
-    datedCount += count;
-    datedPb += storagePb;
-
-    if (endDate < snapshotDate) {
-      dueNowCount += count;
-      dueNowPb += storagePb;
-      return;
-    }
-
-    futureCount += count;
-    futurePb += storagePb;
-  });
-
-  return {
-    dueNowCount,
-    dueNowPb,
-    futureCount,
-    futurePb,
-    noDateCount: Math.max(remainingTenants - datedCount, explicitNoDateCount),
-    noDatePb: Math.max(remainingStorage - datedPb, explicitNoDatePb)
-  };
-}
-
 function setText(id, text) {
   document.getElementById(id).textContent = text;
 }
@@ -692,49 +637,86 @@ function renderSourceTable(rows) {
   const body = document.getElementById('source-table-body');
   body.innerHTML = rows.slice(0, 5).map((row) => `
     <tr>
-      <td><strong>${row.SOURCE_BUCKET}</strong></td>
-      <td>${formatCount(row.REMAINING_TENANTS)} tenants | ${formatPb(row.REMAINING_STORAGE_PB)}</td>
-      <td>${formatCount(row.DELETED_TENANTS)} tenants | ${formatPb(row.DELETED_STORAGE_PB)}</td>
-      <td>${formatCount(row.READY_TO_DELETE_TENANTS)} tenants | ${formatPb(row.READY_TO_DELETE_STORAGE_PB)}</td>
+      <td><strong>${row[0]}</strong></td>
+      <td>${formatCount(row[3])} tenants | ${formatPb(row[4])}</td>
+      <td>${formatCount(row[1])} tenants | ${formatPb(row[2])}</td>
+      <td>${formatCount(row[5])} tenants | ${formatPb(row[6])}</td>
+    </tr>`).join('');
+}
+
+function renderDdcSummary(rows) {
+  const body = document.getElementById('ddc-summary-body');
+  body.innerHTML = rows.map((row) => `
+    <tr>
+      <td><strong>${row.CHANGE_TYPE}</strong></td>
+      <td>${formatCount(row.TENANT_COUNT)}</td>
+      <td>${Number(row.STORAGE_GB_TOTAL || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</td>
+      <td>${row.NOTES || ''}</td>
+    </tr>`).join('');
+}
+
+function renderDdcDetail(rows) {
+  const body = document.getElementById('ddc-detail-body');
+  body.innerHTML = rows.slice(0, 12).map((row) => `
+    <tr>
+      <td>${row.EVENT_UTC || ''}</td>
+      <td><strong>${row.CHANGE_TYPE || ''}</strong></td>
+      <td>${row.TENANT_ID || ''}</td>
+      <td>${row.CURRENT_STAGE || ''}</td>
+      <td>${Number(row.STORAGE_GB || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</td>
     </tr>`).join('');
 }
 
 async function renderDashboard() {
   try {
-    const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, dd9Text] = await Promise.all([
+    const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, dd9Text, ddcSummaryText, ddcDetailText] = await Promise.all([
       fetchText(DATA_FILES.dd1),
       fetchText(DATA_FILES.dd2),
       fetchText(DATA_FILES.dd4),
       fetchText(DATA_FILES.dd5),
       fetchText(DATA_FILES.dd6),
       fetchText(DATA_FILES.dd8),
-      fetchText(DATA_FILES.dd9)
+      fetchText(DATA_FILES.dd9),
+      fetchText(DATA_FILES.ddcSummary),
+      fetchText(DATA_FILES.ddcDetail)
     ]);
 
-    const dd1 = csvToObjects(dd1Text)[0];
-    const dd2 = parseCsv(dd2Text).slice(1);
-    const dd4 = csvToObjects(dd4Text);
-    const dd5 = csvToObjects(dd5Text)[0];
-    const dd6 = parseCsv(dd6Text).slice(1);
-    const dd8 = csvToObjects(dd8Text)[0];
-    const dd9Rows = parseCsv(dd9Text);
+    const dd1 = parseCsv(dd1Text)[0];
+    const dd2 = parseCsv(dd2Text);
+    const dd4 = parseCsv(dd4Text);
+    const dd5 = parseCsv(dd5Text)[0];
+    const dd6 = parseCsv(dd6Text);
+    const dd8 = parseCsv(dd8Text)[0];
+    const ddcSummary = csvToObjects(ddcSummaryText);
+    const ddcDetail = csvToObjects(ddcDetailText)
+      .sort((a, b) => (a.EVENT_UTC < b.EVENT_UTC ? 1 : (a.EVENT_UTC > b.EVENT_UTC ? -1 : 0)));
+    // DD9: header row then one SUMMARY data row
+    // Columns: DUE_OR_OVERDUE,DUE_OVERDUE_PB,FUTURE_DATED,FUTURE_DATED_PB,NO_DATE_YET,NO_DATE_YET_PB
+    // These are computed dynamically: BLOCK_DATE + 15/30 days per usecase type
+    const dd9 = parseCsv(dd9Text)[1]; // skip header, take first data row
 
     const snapshotDateText = document.getElementById('snapshot-note').dataset.asOf;
     const snapshotDate = new Date(`${snapshotDateText}T00:00:00Z`);
 
-    const inScopeTenants = parseNumber(dd1.IN_SCOPE_TENANTS);
-    const inScopeStorage = parseNumber(dd1.IN_SCOPE_STORAGE_PB);
-    const deletedTenants = parseNumber(dd1.DELETED_TENANTS);
-    const deletedStorage = parseNumber(dd1.DELETED_STORAGE_PB);
-    const remainingTenants = parseNumber(dd1.REMAINING_TENANTS);
-    const remainingStorage = parseNumber(dd1.REMAINING_STORAGE_PB);
+    const inScopeTenants = parseNumber(dd1[0]);
+    const inScopeStorage = parseNumber(dd1[1]);
+    const deletedTenants = parseNumber(dd1[2]);
+    const deletedStorage = parseNumber(dd1[3]);
+    const remainingTenants = parseNumber(dd1[4]);
+    const remainingStorage = parseNumber(dd1[5]);
 
     const last7 = dd2.find((row) => row[0] === 'Last 7 days');
     const totalSinceStart = dd2.find((row) => row[0] === 'Since scope start');
     const prior7Deleted = Math.max(parseNumber(totalSinceStart[1]) - parseNumber(last7[1]), 0);
     const prior7Storage = Math.max(parseNumber(totalSinceStart[2]) - parseNumber(last7[2]), 0);
 
-    const { dueNowCount, dueNowPb, futureCount, futurePb, noDateCount, noDatePb } = summarizeDd9(dd9Rows, remainingTenants, remainingStorage, snapshotDate);
+    // Backlog split from DD9 (dynamic block-date computation: BLOCK_DATE + 15 or 30 days)
+    const dueNowCount = parseNumber(dd9[0]);       // deletion window has passed
+    const dueNowPb = parseNumber(dd9[1]);
+    const futureCount = parseNumber(dd9[2]);        // deletion window not yet open
+    const futurePb = parseNumber(dd9[3]);
+    const noDateCount = parseNumber(dd9[4]);        // not yet blocked — no date computable
+    const noDatePb = parseNumber(dd9[5]);
 
     const shownPipelineCount = dd6.reduce((sum, row) => sum + parseNumber(row[1]), 0);
     const shownPipelineStorage = dd6.reduce((sum, row) => sum + parseNumber(row[2]), 0);
@@ -783,10 +765,10 @@ async function renderDashboard() {
       READONLY_IN_PROGRESS: 'In remediation'
     };
     // Consolidate pipeline stages: group readonly stages together
-    const readonlyTotal = parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[1]) +
-               parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[1]);
-    const readonlyStorageTotal = parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[2]) +
-                  parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[2]);
+    const readonlyTotal = (dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[1] ?? 0) + 
+                         (dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[1] ?? 0);
+    const readonlyStorageTotal = (dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[2] ?? 0) + 
+                                (dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[2] ?? 0);
     const scheduledRow = dd6.find(r => r[0] === 'DELETE_SCHEDULED_NOT_DONE');
     const blockedRow = dd6.find(r => r[0] === 'BLOCKED_NOT_SCHEDULED');
     const consolidatedPipeline = [
@@ -802,27 +784,31 @@ async function renderDashboard() {
     setHtml('pipeline-bars', pipelineRowsHtml);
     setHtml('pipeline-note', `<strong>Main bottleneck:</strong> <strong>blocked — awaiting scheduling</strong> (${formatCount(blockedRow[1])} tenants, ${formatPb(blockedRow[2])} storage) is the biggest constraint. Second priority: <strong>in remediation</strong> (${formatCount(readonlyTotal)} tenants) needing block completion before scheduling.`);
 
-    setText('exec-attempts', formatCount(dd5.DELETE_ATTEMPTS));
-    setText('exec-successes', formatCount(dd5.DELETE_SUCCESSES));
-    setText('exec-failures', formatCount(dd5.DELETE_FAILED_ATTEMPTS));
-    setText('exec-pending', formatCount(dd5.DELETE_PENDING_ATTEMPTS));
-    setText('exec-success-title', `Succeeded (${parseNumber(dd5.DELETE_SUCCESS_RATE_PCT).toFixed(0)}%)`);
-    setText('exec-failure-title', `Failed (${parseNumber(dd5.DELETE_FAILURE_RATE_PCT).toFixed(0)}%)`);
-    setText('exec-pending-title', `Pending (${parseNumber(dd5.DELETE_PENDING_RATE_PCT).toFixed(0)}%)`);
+    setText('exec-attempts', formatCount(dd5[0]));
+    setText('exec-successes', formatCount(dd5[1]));
+    setText('exec-failures', formatCount(dd5[2]));
+    setText('exec-pending', formatCount(dd5[3]));
+    setText('exec-success-title', `Succeeded (${parseNumber(dd5[4]).toFixed(0)}%)`);
+    setText('exec-failure-title', `Failed (${parseNumber(dd5[5]).toFixed(0)}%)`);
+    setText('exec-pending-title', `Pending (${parseNumber(dd5[6]).toFixed(0)}%)`);
     setHtml('exec-note', '<strong>Signal:</strong> execution lag in the scheduled queue is the issue, not hard failures.');
 
     renderSourceTable(dd4);
     setHtml('source-note', 'Tenant deletion velocity accelerates when deletions shift from low-storage R0 tenants to higher-storage cohorts (R4, R2, R3). Track both tenant count and storage reclaim to see progress on both axes.');
 
-    const opsBlockedRow = dd6.find((row) => row[0] === 'BLOCKED_NOT_SCHEDULED');
     const readonlyRow = dd6.find((row) => row[0] === 'READONLY_COMPLETE_AWAITING_BLOCK');
-    const opsScheduledRow = dd6.find((row) => row[0] === 'DELETE_SCHEDULED_NOT_DONE');
-    setText('ops-p1-queue', `${formatCount(dd5.DELETE_PENDING_ATTEMPTS)} pending scheduled attempts (${formatPb(opsScheduledRow[2])})`);
-    setText('ops-p1-pipeline', `${formatCount(opsBlockedRow[1])} blocked unscheduled (${formatPb(opsBlockedRow[2])})`);
+    setText('ops-p1-queue', `${formatCount(dd5[3])} pending scheduled attempts (${formatPb(scheduledRow[2])})`);
+    setText('ops-p1-pipeline', `${formatCount(blockedRow[1])} blocked unscheduled (${formatPb(blockedRow[2])})`);
     setText('ops-p2-pipeline', `${formatCount(readonlyRow[1])} ReadOnly complete awaiting Block (${formatPb(readonlyRow[2])})`);
-    setText('ops-p2-failure', `${dd8.FAILURE_BUCKET}: ${formatCount(dd8.FAILURE_EVENT_COUNT)} events`);
+    setText('ops-p2-failure', `${dd8[0]}: ${formatCount(dd8[1])} events`);
 
-    setHtml('data-note', '<strong>Data note:</strong> Scope, velocity, source, execution, and stage metrics come from DD1, DD2, DD4, DD5, DD6, DD8 CSVs. The backlog breakdown uses <strong>DD9.csv</strong> and supports both the older pre-aggregated summary export and the current weekly bucket export. For weekly rows, the page aggregates overdue vs upcoming deletion windows client-side and infers the no-date backlog from the DD1 remaining total.');
+    renderDdcSummary(ddcSummary);
+    renderDdcDetail(ddcDetail);
+    const ddcTotalEvents = ddcSummary.reduce((sum, row) => sum + parseNumber(row.TENANT_COUNT), 0);
+    setHtml('ddc-summary-note', `<strong>DDC:</strong> ${formatCount(ddcTotalEvents)} total change events in the current comparison window.`);
+    setHtml('ddc-detail-note', `<strong>DDC detail:</strong> showing latest ${Math.min(ddcDetail.length, 12)} events out of ${formatCount(ddcDetail.length)} total.`);
+
+    setHtml('data-note', '<strong>Data note:</strong> Scope, velocity, source, execution, and stage metrics come from DD1, DD2, DD4, DD5, DD6, DD8 CSVs. The backlog breakdown uses <strong>DD9.csv</strong>, and change tracking uses <strong>DDC_summary.csv</strong> + <strong>DDC_details.csv</strong>. Re-run DD9 and both DDC queries after each data refresh.');
   } catch (error) {
     setHtml('snapshot-note', `<strong>Load error:</strong> ${error.message}. Serve this folder over HTTP so the dashboard can fetch its CSV snapshot files.`);
   }
