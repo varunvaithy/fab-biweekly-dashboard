@@ -58,31 +58,31 @@ body {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  margin-bottom: 10px;
+    margin-bottom: 6px;
 }
 .kpi-pair {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
-  margin-top: 6px;
+    gap: 6px;
+    margin-top: 4px;
 }
 .kpi-dual {
   border: 1px solid #e6ebf5;
   border-radius: 8px;
-  padding: 8px;
+    padding: 6px;
   background: #fbfcff;
 }
 .kpi-dual .unit {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--muted);
   text-transform: uppercase;
 }
 .kpi-dual .val {
   text-align: left;
-  font-size: 22px;
+    font-size: 18px;
   font-weight: 700;
   line-height: 1.1;
-  margin-top: 2px;
+    margin-top: 1px;
 }
 .kpi-wow {
   margin-top: 6px;
@@ -109,15 +109,15 @@ body {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 .kpi-value {
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: -1px;
 }
 .kpi-sub {
-  margin-top: 4px;
+  margin-top: 2px;
   color: var(--muted);
   font-size: 12px;
 }
@@ -517,7 +517,7 @@ body {
     <div class="card">
       <h3 class="section-title">Execution & Backlog Status</h3>
       <div class="muted">Delete execution snapshot (last 14 days) and backend gap summary</div>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 8px;">
         <div>
           <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Execution Metrics</div>
           <div class="small-grid">
@@ -526,13 +526,13 @@ body {
             <div class="metric-box"><div id="exec-failure-title" class="title">Failed</div><div id="exec-failures" class="num" style="color:var(--red);">--</div></div>
             <div class="metric-box"><div id="exec-pending-title" class="title">Pending</div><div id="exec-pending" class="num" style="color:var(--amber);">--</div></div>
           </div>
-          <div id="exec-note" class="backend" style="font-size:11px; padding:8px; margin-top:8px;">
+          <div id="exec-note" class="backend" style="font-size:11px; padding:8px; margin-top:10px;">
             <strong>Signal:</strong> loading...
           </div>
         </div>
         <div>
           <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">No Delete Date Set</div>
-          <div style="font-size:24px; font-weight:700; margin-bottom:8px; color:var(--warn);"><span id="no-date-count">--</span> | <span id="no-date-storage">--</span></div>
+          <div style="font-size:26px; font-weight:700; margin-bottom:10px; color:var(--warn);"><span id="no-date-count">--</span> | <span id="no-date-storage">--</span></div>
           <div style="font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.5;">Active backlog tenants without a computed/scheduled delete date (awaiting block completion).</div>
           <div class="small-grid">
             <div class="metric-box"><div class="title">ReadOnly → Block</div><div id="no-date-ro-block" class="num">--</div></div>
