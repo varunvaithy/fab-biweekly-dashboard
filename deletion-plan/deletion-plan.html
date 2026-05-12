@@ -844,10 +844,10 @@ async function renderDashboard() {
       READONLY_IN_PROGRESS: 'In remediation'
     };
     // Consolidate pipeline stages: group readonly stages together
-    const readonlyTotal = (dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[1] ?? 0) + 
-                         (dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[1] ?? 0);
-    const readonlyStorageTotal = (dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[2] ?? 0) + 
-                                (dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[2] ?? 0);
+    const readonlyTotal = parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[1] ?? 0) + 
+               parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[1] ?? 0);
+    const readonlyStorageTotal = parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[2] ?? 0) + 
+                  parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[2] ?? 0);
     const scheduledRow = dd6.find(r => r[0] === 'DELETE_SCHEDULED_NOT_DONE');
     const blockedRow = dd6.find(r => r[0] === 'BLOCKED_NOT_SCHEDULED');
     const consolidatedPipeline = [
@@ -861,7 +861,7 @@ async function renderDashboard() {
       .map(([label, count, storage]) => buildPipelineBar(label, count, storage, (parseNumber(count) / maxConsolidatedCount) * 100))
       .join('');
     setHtml('pipeline-bars', pipelineRowsHtml);
-    setHtml('pipeline-note', `<strong>Main bottleneck:</strong> <strong>blocked — awaiting scheduling</strong> (${formatCount(blockedRow[1])} tenants, ${formatPb(blockedRow[2])} storage) is the biggest constraint. Second priority: <strong>in remediation</strong> (${formatCount(readonlyTotal)} tenants) needing block completion before scheduling.`);
+    setHtml('pipeline-note', `<strong>Main bottleneck:</strong> <strong>blocked — awaiting scheduling</strong> (${formatCount(blockedRow?.[1] ?? 0)} tenants, ${formatPb(blockedRow?.[2] ?? 0)} storage) is the biggest constraint. Second priority: <strong>in remediation</strong> (${formatCount(readonlyTotal)} tenants) needing block completion before scheduling.`);
 
     setText('exec-attempts', formatCount(dd5[0]));
     setText('exec-successes', formatCount(dd5[1]));
@@ -876,9 +876,9 @@ async function renderDashboard() {
     setHtml('source-note', 'Tenant deletion velocity accelerates when deletions shift from low-storage R0 tenants to higher-storage cohorts (R4, R2, R3). Track both tenant count and storage reclaim to see progress on both axes.');
 
     const readonlyRow = dd6.find((row) => row[0] === 'READONLY_COMPLETE_AWAITING_BLOCK');
-    setText('ops-p1-queue', `${formatCount(dd5[3])} pending scheduled attempts (${formatPb(scheduledRow[2])})`);
-    setText('ops-p1-pipeline', `${formatCount(blockedRow[1])} blocked unscheduled (${formatPb(blockedRow[2])})`);
-    setText('ops-p2-pipeline', `${formatCount(readonlyRow[1])} ReadOnly complete awaiting Block (${formatPb(readonlyRow[2])})`);
+    setText('ops-p1-queue', `${formatCount(dd5[3])} pending scheduled attempts (${formatPb(scheduledRow?.[2] ?? 0)})`);
+    setText('ops-p1-pipeline', `${formatCount(blockedRow?.[1] ?? 0)} blocked unscheduled (${formatPb(blockedRow?.[2] ?? 0)})`);
+    setText('ops-p2-pipeline', `${formatCount(readonlyRow?.[1] ?? 0)} ReadOnly complete awaiting Block (${formatPb(readonlyRow?.[2] ?? 0)})`);
     setText('ops-p2-failure', `${dd8[0]}: ${formatCount(dd8[1])} events`);
 
     renderDdcSummary(ddcSummary);
