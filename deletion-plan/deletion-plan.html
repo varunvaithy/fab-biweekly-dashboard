@@ -30,29 +30,12 @@ body {
   padding: 16px;
 }
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+  display: block;
   margin-bottom: 10px;
 }
 .header h1 {
   margin: 0;
   font-size: 24px;
-}
-.sub {
-  color: var(--muted);
-  font-size: 13px;
-  margin-top: 6px;
-}
-.badge {
-  background: #e7eefc;
-  color: var(--primary);
-  border: 1px solid #c9dafc;
-  border-radius: 999px;
-  padding: 7px 12px;
-  font-size: 12px;
-  font-weight: 600;
 }
 .grid-kpi {
   display: grid;
@@ -398,15 +381,11 @@ body {
 <body>
 <div class="container">
   <div class="header">
-    <div>
-      <h1>Tenant Deletion Plan Dashboard</h1>
-      <div class="sub">CSV snapshot with backlog rollout driven by proposed deletion dates</div>
-    </div>
-    <div class="badge">Data mode: live CSV render</div>
+    <h1>Tenant Deletion Plan Dashboard</h1>
   </div>
 
   <div id="snapshot-note" style="margin-bottom: 8px; color: var(--muted); font-size: 12px;" data-as-of="2026-05-06">
-    Loading snapshot metrics...
+    Report Date: --
   </div>
 
   <div class="grid-kpi">
@@ -810,7 +789,7 @@ async function renderDashboard() {
     const otherPipelineStorage = Math.max(remainingStorage - shownPipelineStorage, 0);
     const maxPipelineCount = Math.max(...dd6.map((row) => parseNumber(row[1])), otherPipelineCount, 1);
 
-    setHtml('snapshot-note', `Snapshot pulled on <strong>${snapshotDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</strong>. WoW compares the current 7-day delete window vs the prior 7-day window.`);
+    setHtml('snapshot-note', `Report Date: <strong>${snapshotDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</strong>`);
 
     setText('in-scope-storage', formatPb(inScopeStorage));
     setText('in-scope-tenants', formatCount(inScopeTenants));
