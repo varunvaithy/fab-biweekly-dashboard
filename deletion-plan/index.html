@@ -635,7 +635,22 @@ async function fetchText(path) {
 
 function renderSourceTable(rows) {
   const body = document.getElementById('source-table-body');
-  body.innerHTML = rows.slice(0, 5).map((row) => `
+  const normalized = rows
+    .filter((row) => row && row.length >= 7)
+    .filter((row) => String(row[0] || '').toUpperCase() !== 'SOURCE_BUCKET')
+    .sort((a, b) => {
+      const deletedCountDelta = parseNumber(b[1]) - parseNumber(a[1]);
+      if (deletedCountDelta !== 0) {
+        return deletedCountDelta;
+      }
+      const deletedStorageDelta = parseNumber(b[2]) - parseNumber(a[2]);
+      if (deletedStorageDelta !== 0) {
+        return deletedStorageDelta;
+      }
+      return String(a[0]).localeCompare(String(b[0]));
+    });
+
+  body.innerHTML = normalized.map((row) => `
     <tr>
       <td><strong>${row[0]}</strong></td>
       <td>${formatCount(row[3])} tenants | ${formatPb(row[4])}</td>
@@ -873,7 +888,7 @@ async function renderDashboard() {
     setHtml('exec-note', '<strong>Signal:</strong> execution lag in the scheduled queue is the issue, not hard failures.');
 
     renderSourceTable(dd4);
-    setHtml('source-note', 'Tenant deletion velocity accelerates when deletions shift from low-storage R0 tenants to higher-storage cohorts (R4, R2, R3). Track both tenant count and storage reclaim to see progress on both axes.');
+    setHtml('source-note', 'Rows are sorted by deleted tenants first, then deleted storage, and all source rows are shown so low-storage cohorts (including R0) remain visible.');
 
     const readonlyRow = dd6.find((row) => row[0] === 'READONLY_COMPLETE_AWAITING_BLOCK');
     setText('ops-p1-queue', `${formatCount(dd5[3])} pending scheduled attempts (${formatPb(scheduledRow?.[2] ?? 0)})`);
