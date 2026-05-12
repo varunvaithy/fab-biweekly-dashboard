@@ -667,6 +667,87 @@ function renderDdcDetail(rows) {
     </tr>`).join('');
 }
 
+function summarizeDd9(rows, remainingTenants, remainingStorage, snapshotDate) {
+  if (!rows.length) {
+    return {
+      dueNowCount: 0,
+      dueNowPb: 0,
+      futureCount: 0,
+      futurePb: 0,
+      noDateCount: remainingTenants,
+      noDatePb: remainingStorage
+    };
+  }
+
+  // Legacy format: header + single summary row
+  if (rows[0][0] === 'DUE_OR_OVERDUE') {
+    const summaryRow = rows[1] ?? [];
+    return {
+      dueNowCount: parseNumber(summaryRow[0]),
+      dueNowPb: parseNumber(summaryRow[1]),
+      futureCount: parseNumber(summaryRow[2]),
+      futurePb: parseNumber(summaryRow[3]),
+      noDateCount: parseNumber(summaryRow[4]),
+      noDatePb: parseNumber(summaryRow[5])
+    };
+  }
+
+  // Current query output: SUMMARY/WEEKLY layout
+  const summaryRow = rows.find((row) => row[0] === 'SUMMARY');
+  if (summaryRow) {
+    return {
+      dueNowCount: parseNumber(summaryRow[5]),
+      dueNowPb: parseNumber(summaryRow[6]),
+      futureCount: parseNumber(summaryRow[7]),
+      futurePb: parseNumber(summaryRow[8]),
+      noDateCount: parseNumber(summaryRow[9]),
+      noDatePb: parseNumber(summaryRow[10])
+    };
+  }
+
+  // Weekly-only fallback: compute overdue vs future from week end date.
+  let dueNowCount = 0;
+  let dueNowPb = 0;
+  let futureCount = 0;
+  let futurePb = 0;
+  let datedCount = 0;
+  let datedPb = 0;
+
+  rows.forEach((row) => {
+    if (row[0] !== 'WEEKLY') {
+      return;
+    }
+
+    const weekEnd = parseDate(row[2]);
+    const count = parseNumber(row[3]);
+    const storagePb = parseNumber(row[4]);
+
+    if (!weekEnd) {
+      return;
+    }
+
+    datedCount += count;
+    datedPb += storagePb;
+
+    if (weekEnd < snapshotDate) {
+      dueNowCount += count;
+      dueNowPb += storagePb;
+    } else {
+      futureCount += count;
+      futurePb += storagePb;
+    }
+  });
+
+  return {
+    dueNowCount,
+    dueNowPb,
+    futureCount,
+    futurePb,
+    noDateCount: Math.max(remainingTenants - datedCount, 0),
+    noDatePb: Math.max(remainingStorage - datedPb, 0)
+  };
+}
+
 async function renderDashboard() {
   try {
     const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, dd9Text, ddcSummaryText, ddcDetailText] = await Promise.all([
@@ -690,10 +771,7 @@ async function renderDashboard() {
     const ddcSummary = csvToObjects(ddcSummaryText);
     const ddcDetail = csvToObjects(ddcDetailText)
       .sort((a, b) => (a.EVENT_UTC < b.EVENT_UTC ? 1 : (a.EVENT_UTC > b.EVENT_UTC ? -1 : 0)));
-    // DD9: header row then one SUMMARY data row
-    // Columns: DUE_OR_OVERDUE,DUE_OVERDUE_PB,FUTURE_DATED,FUTURE_DATED_PB,NO_DATE_YET,NO_DATE_YET_PB
-    // These are computed dynamically: BLOCK_DATE + 15/30 days per usecase type
-    const dd9 = parseCsv(dd9Text)[1]; // skip header, take first data row
+    const dd9Rows = parseCsv(dd9Text);
 
     const snapshotDateText = document.getElementById('snapshot-note').dataset.asOf;
     const snapshotDate = new Date(`${snapshotDateText}T00:00:00Z`);
@@ -710,13 +788,14 @@ async function renderDashboard() {
     const prior7Deleted = Math.max(parseNumber(totalSinceStart[1]) - parseNumber(last7[1]), 0);
     const prior7Storage = Math.max(parseNumber(totalSinceStart[2]) - parseNumber(last7[2]), 0);
 
-    // Backlog split from DD9 (dynamic block-date computation: BLOCK_DATE + 15 or 30 days)
-    const dueNowCount = parseNumber(dd9[0]);       // deletion window has passed
-    const dueNowPb = parseNumber(dd9[1]);
-    const futureCount = parseNumber(dd9[2]);        // deletion window not yet open
-    const futurePb = parseNumber(dd9[3]);
-    const noDateCount = parseNumber(dd9[4]);        // not yet blocked — no date computable
-    const noDatePb = parseNumber(dd9[5]);
+    const {
+      dueNowCount,
+      dueNowPb,
+      futureCount,
+      futurePb,
+      noDateCount,
+      noDatePb
+    } = summarizeDd9(dd9Rows, remainingTenants, remainingStorage, snapshotDate);
 
     const shownPipelineCount = dd6.reduce((sum, row) => sum + parseNumber(row[1]), 0);
     const shownPipelineStorage = dd6.reduce((sum, row) => sum + parseNumber(row[2]), 0);
