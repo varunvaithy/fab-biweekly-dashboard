@@ -440,8 +440,8 @@ body {
     </div>
 
     <div class="card">
-      <h3 class="section-title">Deletion by Source (Top Storage)</h3>
-      <div class="muted">Track deletion progress and remaining backlog by fraud source; counts first, then storage</div>
+      <h3 class="section-title">Deletion by Source (Grouped)</h3>
+      <div class="muted">Grouped into R0-R5, Manual, A1 DS Model (old), Adhoc, DS Model (2026), and Others</div>
       <table class="table" style="font-size: 11px;">
         <thead><tr><th>Source</th><th>Remaining</th><th>Deleted</th><th>Ready-to-Delete</th></tr></thead>
         <tbody id="source-table-body"></tbody>
@@ -472,34 +472,8 @@ body {
         <span id="ops-p2-failure">--</span><br><span class="tag pending">Classify root causes</span>
       </div>
     </div>
-    <div class="backend">
-      <strong>One-page readout:</strong> compare the due-date split at the top with the stage choke points and the last 7 days throughput row.
-    </div>
-  </div>
-
-  <div class="row-tight">
-    <div class="card">
-      <h3 class="section-title">Since Last Run (DDC Summary)</h3>
-      <div class="muted">Change events captured between last run and now (same rolling window as DDC queries)</div>
-      <table class="table" style="font-size: 11px;">
-        <thead><tr><th>Change type</th><th>Tenants</th><th>Storage (GB)</th><th>Notes</th></tr></thead>
-        <tbody id="ddc-summary-body"></tbody>
-      </table>
-      <div id="ddc-summary-note" class="backend">
-        <strong>DDC:</strong> loading...
-      </div>
-    </div>
-
-    <div class="card">
-      <h3 class="section-title">Recent Change Events (DDC Detail)</h3>
-      <div class="muted">Most recent per-tenant events from the DDC_DETAIL output (top 12)</div>
-      <table class="table" style="font-size: 11px;">
-        <thead><tr><th>Date</th><th>Type</th><th>Tenant</th><th>Stage</th><th>Storage (GB)</th></tr></thead>
-        <tbody id="ddc-detail-body"></tbody>
-      </table>
-      <div id="ddc-detail-note" class="backend">
-        <strong>DDC detail:</strong> loading...
-      </div>
+    <div id="ops-readout" class="backend">
+      <strong>One-page readout:</strong> loading...
     </div>
   </div>
 
@@ -515,9 +489,7 @@ const DATA_FILES = {
   dd5: 'Results for Dashboard/DD5.csv',
   dd6: 'Results for Dashboard/DD6.csv',
   dd8: 'Results for Dashboard/DD8.csv',
-  dd9: 'Results for Dashboard/DD9.csv',
-  ddcSummary: 'Results for Dashboard/DDC_summary.csv',
-  ddcDetail: 'Results for Dashboard/DDC_details.csv'
+  dd9: 'Results for Dashboard/DD9.csv'
 };
 
 function parseCsv(text) {
@@ -563,18 +535,6 @@ function parseCsv(text) {
     }
   }
   return rows;
-}
-
-function csvToObjects(text) {
-  const rows = parseCsv(text);
-  const [header, ...body] = rows;
-  return body.map((row) => {
-    const item = {};
-    header.forEach((name, index) => {
-      item[name] = row[index] ?? '';
-    });
-    return item;
-  });
 }
 
 function formatCount(value) {
@@ -633,11 +593,54 @@ async function fetchText(path) {
   return response.text();
 }
 
+function normalizeSourceBucket(raw) {
+  const text = String(raw || '').trim();
+  const upper = text.toUpperCase();
+
+  const ruleMatch = upper.match(/^R([0-5])\b/);
+  if (ruleMatch) {
+    return `R${ruleMatch[1]}`;
+  }
+  if (upper.startsWith('R0/RULES')) {
+    return 'R0';
+  }
+  if (upper.includes('MANUAL')) {
+    return 'Manual';
+  }
+  if (upper.includes('A1 DS MODEL')) {
+    return 'A1 DS Model (old)';
+  }
+  if (upper.includes('ADHOC')) {
+    return 'Adhoc Investigation';
+  }
+  if (upper.includes('DS MODEL') && upper.includes('2026')) {
+    return 'DS Model (2026)';
+  }
+
+  return 'Others';
+}
+
 function renderSourceTable(rows) {
   const body = document.getElementById('source-table-body');
-  const normalized = rows
+  const grouped = new Map();
+
+  rows
     .filter((row) => row && row.length >= 7)
-    .filter((row) => String(row[0] || '').toUpperCase() !== 'SOURCE_BUCKET')
+    .filter((row) => String(row[0] || '').trim().toUpperCase() !== 'SOURCE_BUCKET')
+    .forEach((row) => {
+      const bucket = normalizeSourceBucket(row[0]);
+      const current = grouped.get(bucket) || [0, 0, 0, 0, 0, 0];
+      current[0] += parseNumber(row[1]);
+      current[1] += parseNumber(row[2]);
+      current[2] += parseNumber(row[3]);
+      current[3] += parseNumber(row[4]);
+      current[4] += parseNumber(row[5]);
+      current[5] += parseNumber(row[6]);
+      grouped.set(bucket, current);
+    });
+
+  const normalized = Array.from(grouped.entries())
+    .map(([bucket, values]) => [bucket, ...values])
     .sort((a, b) => {
       const deletedCountDelta = parseNumber(b[1]) - parseNumber(a[1]);
       if (deletedCountDelta !== 0) {
@@ -656,29 +659,6 @@ function renderSourceTable(rows) {
       <td>${formatCount(row[3])} tenants | ${formatPb(row[4])}</td>
       <td>${formatCount(row[1])} tenants | ${formatPb(row[2])}</td>
       <td>${formatCount(row[5])} tenants | ${formatPb(row[6])}</td>
-    </tr>`).join('');
-}
-
-function renderDdcSummary(rows) {
-  const body = document.getElementById('ddc-summary-body');
-  body.innerHTML = rows.map((row) => `
-    <tr>
-      <td><strong>${row.CHANGE_TYPE}</strong></td>
-      <td>${formatCount(row.TENANT_COUNT)}</td>
-      <td>${Number(row.STORAGE_GB_TOTAL || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</td>
-      <td>${row.NOTES || ''}</td>
-    </tr>`).join('');
-}
-
-function renderDdcDetail(rows) {
-  const body = document.getElementById('ddc-detail-body');
-  body.innerHTML = rows.slice(0, 12).map((row) => `
-    <tr>
-      <td>${row.EVENT_UTC || ''}</td>
-      <td><strong>${row.CHANGE_TYPE || ''}</strong></td>
-      <td>${row.TENANT_ID || ''}</td>
-      <td>${row.CURRENT_STAGE || ''}</td>
-      <td>${Number(row.STORAGE_GB || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</td>
     </tr>`).join('');
 }
 
@@ -765,16 +745,14 @@ function summarizeDd9(rows, remainingTenants, remainingStorage, snapshotDate) {
 
 async function renderDashboard() {
   try {
-    const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, dd9Text, ddcSummaryText, ddcDetailText] = await Promise.all([
+    const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, dd9Text] = await Promise.all([
       fetchText(DATA_FILES.dd1),
       fetchText(DATA_FILES.dd2),
       fetchText(DATA_FILES.dd4),
       fetchText(DATA_FILES.dd5),
       fetchText(DATA_FILES.dd6),
       fetchText(DATA_FILES.dd8),
-      fetchText(DATA_FILES.dd9),
-      fetchText(DATA_FILES.ddcSummary),
-      fetchText(DATA_FILES.ddcDetail)
+      fetchText(DATA_FILES.dd9)
     ]);
 
     const dd1 = parseCsv(dd1Text)[0];
@@ -783,9 +761,6 @@ async function renderDashboard() {
     const dd5 = parseCsv(dd5Text)[0];
     const dd6 = parseCsv(dd6Text);
     const dd8 = parseCsv(dd8Text)[0];
-    const ddcSummary = csvToObjects(ddcSummaryText);
-    const ddcDetail = csvToObjects(ddcDetailText)
-      .sort((a, b) => (a.EVENT_UTC < b.EVENT_UTC ? 1 : (a.EVENT_UTC > b.EVENT_UTC ? -1 : 0)));
     const dd9Rows = parseCsv(dd9Text);
 
     const snapshotDateText = document.getElementById('snapshot-note').dataset.asOf;
@@ -888,21 +863,19 @@ async function renderDashboard() {
     setHtml('exec-note', '<strong>Signal:</strong> execution lag in the scheduled queue is the issue, not hard failures.');
 
     renderSourceTable(dd4);
-    setHtml('source-note', 'Rows are sorted by deleted tenants first, then deleted storage, and all source rows are shown so low-storage cohorts (including R0) remain visible.');
+    setHtml('source-note', 'Grouped source buckets are sorted by deleted tenants first, then deleted storage. Categories shown: R0-R5, Manual, A1 DS Model (old), Adhoc Investigation, DS Model (2026), Others.');
 
     const readonlyRow = dd6.find((row) => row[0] === 'READONLY_COMPLETE_AWAITING_BLOCK');
     setText('ops-p1-queue', `${formatCount(dd5[3])} pending scheduled attempts (${formatPb(scheduledRow?.[2] ?? 0)})`);
     setText('ops-p1-pipeline', `${formatCount(blockedRow?.[1] ?? 0)} blocked unscheduled (${formatPb(blockedRow?.[2] ?? 0)})`);
     setText('ops-p2-pipeline', `${formatCount(readonlyRow?.[1] ?? 0)} ReadOnly complete awaiting Block (${formatPb(readonlyRow?.[2] ?? 0)})`);
     setText('ops-p2-failure', `${dd8[0]}: ${formatCount(dd8[1])} events`);
+    setHtml(
+      'ops-readout',
+      `<strong>One-page readout:</strong> overdue pressure is <strong>${remainingTenants ? ((dueNowCount / remainingTenants) * 100).toFixed(1) : '0.0'}%</strong> of backlog (${formatCount(dueNowCount)} tenants), while only <strong>${remainingTenants ? ((parseNumber(scheduledRow?.[1] ?? 0) / remainingTenants) * 100).toFixed(1) : '0.0'}%</strong> is ready-to-execute. Priority remains scheduling blocked tenants and draining pending scheduled deletes.`
+    );
 
-    renderDdcSummary(ddcSummary);
-    renderDdcDetail(ddcDetail);
-    const ddcTotalEvents = ddcSummary.reduce((sum, row) => sum + parseNumber(row.TENANT_COUNT), 0);
-    setHtml('ddc-summary-note', `<strong>DDC:</strong> ${formatCount(ddcTotalEvents)} total change events in the current comparison window.`);
-    setHtml('ddc-detail-note', `<strong>DDC detail:</strong> showing latest ${Math.min(ddcDetail.length, 12)} events out of ${formatCount(ddcDetail.length)} total.`);
-
-    setHtml('data-note', '<strong>Data note:</strong> Scope, velocity, source, execution, and stage metrics come from DD1, DD2, DD4, DD5, DD6, DD8 CSVs. The backlog breakdown uses <strong>DD9.csv</strong>, and change tracking uses <strong>DDC_summary.csv</strong> + <strong>DDC_details.csv</strong>. Re-run DD9 and both DDC queries after each data refresh.');
+    setHtml('data-note', '<strong>Data note:</strong> Scope, velocity, source grouping, execution, and stage metrics come from DD1, DD2, DD4, DD5, DD6, DD8 CSVs. The backlog breakdown and overdue pressure signal use <strong>DD9.csv</strong>. Re-run DD1, DD2, DD4, DD5, DD6, DD8, and DD9 after each refresh.');
   } catch (error) {
     setHtml('snapshot-note', `<strong>Load error:</strong> ${error.message}. Serve this folder over HTTP so the dashboard can fetch its CSV snapshot files.`);
   }
