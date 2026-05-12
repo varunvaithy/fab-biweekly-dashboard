@@ -104,6 +104,33 @@ body {
   color: var(--muted);
   font-size: 12px;
 }
+/* First 3 hero cards: use larger typography/spacing to reduce empty bottom area */
+.grid-kpi > .card:nth-child(-n+3) .kpi-label {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-pair {
+  gap: 8px;
+  margin-top: 6px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-dual {
+  padding: 8px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-dual .unit {
+  font-size: 10px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-dual .val {
+  font-size: 21px;
+  margin-top: 2px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-wow {
+  margin-top: 9px;
+  font-size: 12px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-formula {
+  margin-top: 9px;
+  font-size: 11px;
+}
 .row {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
