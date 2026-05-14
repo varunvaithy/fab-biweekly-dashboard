@@ -913,6 +913,7 @@ async function renderDashboard() {
     const remainingStorage = parseNumber(dd1[5]);
 
     const last7 = dd2.find((row) => row[0] === 'Last 7 days');
+    const last14 = dd2.find((row) => row[0] === 'Last 14 days');
     const totalSinceStart = dd2.find((row) => row[0] === 'Since scope start');
     const prior7Deleted = Math.max(parseNumber(totalSinceStart[1]) - parseNumber(last7[1]), 0);
     const prior7Storage = Math.max(parseNumber(totalSinceStart[2]) - parseNumber(last7[2]), 0);
@@ -1016,7 +1017,7 @@ async function renderDashboard() {
     setText('flow-block-other', formatCountStorage(blockOtherCount, blockOtherPb));
 
     setText('flow-delete-main', formatCountStorage(parseNumber(dd1[2]), parseNumber(dd1[3])));
-    setText('flow-delete-last14', `${formatCount(parseNumber(dd5[1]))} | ${formatPb(0)}`);
+    setText('flow-delete-last14', `${formatCount(parseNumber(dd5[1]))} | ${formatPb(parseNumber(last14?.[2] ?? 0))}`);
     setText('flow-delete-fail14', `${formatCount(parseNumber(dd5[2]))} | ${formatPb(0)}`);
     setText('flow-inscope-main', formatCountStorage(parseNumber(dd1[0]), parseNumber(dd1[1])));
 
