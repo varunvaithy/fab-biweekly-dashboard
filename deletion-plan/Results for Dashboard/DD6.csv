@@ -1,4 +1,5 @@
-﻿DELETE_SCHEDULED_NOT_DONE,14216,54.97,Await execution / retry,Immediate feeder
-BLOCKED_NOT_SCHEDULED,4324,36.19,Can enter delete queue next,Ready after scheduling
-READONLY_COMPLETE_AWAITING_BLOCK,6954,2.30,Needs Block before delete,Main feeder
-READONLY_IN_PROGRESS,339,0.51,Needs ReadOnly completion,Dependent on remediation
+﻿PIPELINE_STAGE,TENANT_COUNT,STORAGE_PB,EXPECTED_NEXT,STATUS_HINT
+DELETE_SCHEDULED_NOT_DONE,13310,54.89,Await execution / retry,Immediate feeder
+BLOCKED_NOT_SCHEDULED,5028,36.36,Can enter delete queue next,Ready after scheduling
+READONLY_COMPLETE_AWAITING_BLOCK,6260,2.28,Needs Block before delete,Main feeder
+READONLY_IN_PROGRESS,331,0.47,Needs ReadOnly completion,Dependent on remediation
