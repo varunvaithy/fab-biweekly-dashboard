@@ -420,7 +420,7 @@ body {
     <h1>Tenant Deletion Plan Dashboard</h1>
   </div>
 
-  <div id="snapshot-note" style="margin-bottom: 8px; color: var(--muted); font-size: 12px;" data-as-of="2026-05-12">
+  <div id="snapshot-note" style="margin-bottom: 8px; color: var(--muted); font-size: 12px;" data-as-of="2026-05-14">
     Report Date: --
   </div>
 
@@ -586,7 +586,8 @@ const DATA_FILES = {
   dd5: 'Results for Dashboard/DD5.csv',
   dd6: 'Results for Dashboard/DD6.csv',
   dd8: 'Results for Dashboard/DD8.csv',
-  dd9: 'Results for Dashboard/DD9.csv'
+  dd9: 'Results for Dashboard/DD9.csv',
+  dd10: 'Results for Dashboard/DD10.csv'
 };
 
 function parseCsv(text) {
@@ -844,16 +845,52 @@ function summarizeDd9(rows, remainingTenants, remainingStorage, snapshotDate) {
   };
 }
 
+function summarizeDd10PastSla(dd10Rows) {
+  if (!dd10Rows.length) {
+    return { count: 0, storagePb: 0 };
+  }
+
+  const header = dd10Rows[0] || [];
+  const dataRows = dd10Rows.slice(1);
+  const indexByName = new Map(header.map((name, index) => [name, index]));
+
+  const statusIndex = indexByName.get('CURRENT_STATUS');
+  const inPlanIndex = indexByName.get('IN_PLAN_FOR_DELETION');
+  const dueBucketIndex = indexByName.get('DUE_BUCKET');
+  const storageTbIndex = indexByName.get('STORAGE_TB');
+
+  if (statusIndex === undefined || inPlanIndex === undefined || dueBucketIndex === undefined || storageTbIndex === undefined) {
+    return { count: 0, storagePb: 0 };
+  }
+
+  let count = 0;
+  let storageTb = 0;
+
+  dataRows.forEach((row) => {
+    const status = String(row[statusIndex] || '').trim();
+    const inPlan = String(row[inPlanIndex] || '').trim();
+    const dueBucket = String(row[dueBucketIndex] || '').trim();
+
+    if (status === 'BLOCK_COMPLETED' && inPlan === '0' && dueBucket === 'DUE_OR_OVERDUE') {
+      count += 1;
+      storageTb += parseNumber(row[storageTbIndex]);
+    }
+  });
+
+  return { count, storagePb: storageTb / 1024 };
+}
+
 async function renderDashboard() {
   try {
-    const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, dd9Text] = await Promise.all([
+    const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, dd9Text, dd10Text] = await Promise.all([
       fetchText(DATA_FILES.dd1),
       fetchText(DATA_FILES.dd2),
       fetchText(DATA_FILES.dd4),
       fetchText(DATA_FILES.dd5),
       fetchText(DATA_FILES.dd6),
       fetchText(DATA_FILES.dd8),
-      fetchText(DATA_FILES.dd9)
+      fetchText(DATA_FILES.dd9),
+      fetchText(DATA_FILES.dd10)
     ]);
 
     const dd1 = parseCsv(dd1Text)[0];
@@ -863,6 +900,7 @@ async function renderDashboard() {
     const dd6 = parseCsv(dd6Text);
     const dd8 = parseCsv(dd8Text)[0];
     const dd9Rows = parseCsv(dd9Text);
+    const dd10Rows = parseCsv(dd10Text);
 
     const snapshotDateText = document.getElementById('snapshot-note').dataset.asOf;
     const snapshotDate = new Date(`${snapshotDateText}T00:00:00Z`);
@@ -962,9 +1000,10 @@ async function renderDashboard() {
     const blockOtherCount = Math.max(parseNumber(dd1[4]) - blockNoScheduleCount - blockScheduledCount - readonlyTotal, 0);
     const blockOtherPb = Math.max(parseNumber(dd1[5]) - blockNoSchedulePb - blockScheduledPb - parseNumber(readonlyStorageTotal), 0);
 
-    // DD10-based SLA-overdue subset value tracked in the flow preview for this snapshot
-    const blockSlaOverdueCount = 487;
-    const blockSlaOverduePb = 11.77;
+    // DD10-based subset: blocked, not in plan for deletion, and already overdue.
+    const dd10PastSla = summarizeDd10PastSla(dd10Rows);
+    const blockSlaOverdueCount = dd10PastSla.count;
+    const blockSlaOverduePb = dd10PastSla.storagePb;
 
     setText('flow-readonly-main', formatCountStorage(readonlyTotal, parseNumber(readonlyStorageTotal)));
     setText('flow-readonly-planned', `${formatCount(parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[1] ?? 0))} | ${formatPb(parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[2] ?? 0))}`);
@@ -1003,7 +1042,7 @@ async function renderDashboard() {
     renderSourceTable(dd4);
     setHtml('source-note', 'Tenant deletion velocity accelerates when deletions shift from low-storage R0 tenants to higher-storage cohorts (R4, R2, R3). Track both tenant count and storage reclaim to see progress on both axes.');
 
-    setHtml('data-note', '<strong>Data note:</strong> Scope, velocity, source, execution, and stage metrics come from DD1, DD2, DD4, DD5, DD6, DD8 CSVs. Backlog breakdown uses DD9 with support for both legacy summary output and current SUMMARY/WEEKLY output.');
+    setHtml('data-note', '<strong>Data note:</strong> Scope, velocity, source, execution, and stage metrics come from DD1, DD2, DD4, DD5, DD6, DD8 CSVs. Backlog breakdown uses DD9 with support for both legacy summary output and current SUMMARY/WEEKLY output. The Block past-SLA split is derived from DD10 (BLOCK_COMPLETED + IN_PLAN_FOR_DELETION=0 + DUE_OR_OVERDUE).');
   } catch (error) {
     setHtml('snapshot-note', `<strong>Load error:</strong> ${error.message}. Serve this folder over HTTP so the dashboard can fetch its CSV snapshot files.`);
   }
