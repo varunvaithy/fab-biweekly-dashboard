@@ -893,12 +893,12 @@ async function renderDashboard() {
       fetchText(DATA_FILES.dd10)
     ]);
 
-    const dd1 = parseCsv(dd1Text)[0];
+    const dd1 = parseCsv(dd1Text)[1] ?? parseCsv(dd1Text)[0];
     const dd2 = parseCsv(dd2Text);
     const dd4 = parseCsv(dd4Text);
-    const dd5 = parseCsv(dd5Text)[0];
-    const dd6 = parseCsv(dd6Text);
-    const dd8 = parseCsv(dd8Text)[0];
+    const dd5 = parseCsv(dd5Text)[1] ?? parseCsv(dd5Text)[0];
+    const dd6 = parseCsv(dd6Text).slice(1);
+    const dd8 = parseCsv(dd8Text)[1] ?? parseCsv(dd8Text)[0];
     const dd9Rows = parseCsv(dd9Text);
     const dd10Rows = parseCsv(dd10Text);
 
