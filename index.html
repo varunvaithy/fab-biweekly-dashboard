@@ -261,7 +261,7 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
         </div>
         <div style="display: flex; gap: 8px; align-items: stretch;">
           <div id="hero-storage-pill" style="background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2); border-radius: 8px; padding: 6px 12px; text-align: center; min-width: 80px;">
-            <div style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px;">Detected</div>
+            <div style="font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px;">This Period</div>
             <div style="font-size: 16px; font-weight: 800; color: #2563eb;" id="hero-storage">—</div>
           </div>
           <div id="hero-storage-ytd-pill" style="background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 8px; padding: 6px 12px; text-align: center; min-width: 80px;">
@@ -814,10 +814,11 @@ function renderHeroKPIs() {
     if (el) el.textContent = DATA.periodStart + ' \u2192 ' + DATA.periodEnd;
   }
 
-  // Storage pills — This period from A1 detection, YTD cumulative from C2b
+  // Storage pills — Both from C2b (single source of truth for remediation)
   const authStorage = getAuthoritativeStorage(); // cumulative TB
-  if (DATA.A1 && DATA.A1.current) {
-    const periodTb = DATA.A1.current.storage_tb || (DATA.A1.current.storage_pb ? DATA.A1.current.storage_pb * 1024 : 0);
+  if (DATA.C2b && DATA.C2b.length) {
+    const currentPeriod = DATA.C2b[DATA.C2b.length - 1]; // period_num 0 = current
+    const periodTb = currentPeriod.storage_tb || 0;
     const elP = document.getElementById('hero-storage');
     if (elP) elP.textContent = fmtStorage(periodTb);
   }
