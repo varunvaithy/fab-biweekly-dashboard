@@ -464,7 +464,7 @@ body {
 
   <div class="card">
     <h3 class="section-title">Remediation Pipeline Snapshot</h3>
-    <div class="muted">This is how the 3-state flow feeds into the main dashboard using DD1 + DD6 + DD10 definitions.</div>
+    <div class="muted">This is how the 3-state flow feeds into the main dashboard using the latest remediation snapshot data.</div>
     <div class="flow-preview-grid" style="margin-top:10px;">
       <section class="flow-stage">
         <h4>Read-only</h4>
@@ -482,9 +482,9 @@ body {
         <div class="flow-main-sub">tenants | storage</div>
         <div class="flow-split">
           <div class="flow-split-row"><span>No delete date (not yet overdue)</span><strong id="flow-block-nosched">--</strong></div>
-          <div class="flow-split-row"><span>Delete date scheduled but not completed</span><strong id="flow-block-sched">--</strong></div>
+          <div class="flow-split-row"><span>Delete date scheduled, pending completion</span><strong id="flow-block-sched">--</strong></div>
           <div class="flow-split-row"><span>No delete date (past SLA)</span><strong id="flow-block-overdue" style="color:var(--red);">--</strong></div>
-          <div class="flow-split-row"><span>Other active block statuses</span><strong id="flow-block-other">--</strong></div>
+          <div class="flow-split-row"><span>Other block-completed statuses</span><strong id="flow-block-other">--</strong></div>
         </div>
       </section>
       <div class="flow-arrow">&#8594;</div>
@@ -531,10 +531,10 @@ body {
   <div class="row-tight">
     <div class="card">
       <h3 class="section-title">Execution & Backlog Status</h3>
-      <div class="muted">Delete execution snapshot (last 14 days) and backend gap summary</div>
+      <div class="muted">Delete execution snapshot (last 14 days) and actionable backlog view</div>
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 8px;">
         <div>
-          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Execution Metrics (DD5)</div>
+          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Execution Metrics</div>
           <div class="small-grid">
             <div class="metric-box"><div class="title">Terminal outcomes (1/-1)</div><div id="exec-attempts" class="num">--</div></div>
             <div class="metric-box"><div id="exec-success-title" class="title">Deleted</div><div id="exec-successes" class="num" style="color:var(--green);">--</div></div>
@@ -546,14 +546,14 @@ body {
           </div>
         </div>
         <div>
-          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">No Delete Date Set</div>
-          <div style="font-size:26px; font-weight:700; margin-bottom:10px; color:var(--warn);"><span id="no-date-count">--</span> | <span id="no-date-storage">--</span></div>
-          <div style="font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.5;">Active backlog tenants without a computed/scheduled delete date (awaiting block completion).</div>
+          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Backlog Status</div>
+          <div style="font-size:26px; font-weight:700; margin-bottom:10px; color:var(--red);"><span id="backlog-overdue-count">--</span> | <span id="backlog-overdue-storage">--</span></div>
+          <div style="font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.5;">Overdue backlog needs immediate scheduling/execution focus.</div>
           <div class="small-grid">
-            <div class="metric-box"><div class="title">ReadOnly → Block</div><div id="no-date-ro-block" class="num">--</div></div>
-            <div class="metric-box"><div class="title">ReadOnly in progress</div><div id="no-date-ro-progress" class="num">--</div></div>
-            <div class="metric-box"><div class="title">Auto-remediated</div><div id="no-date-auto" class="num">--</div></div>
-            <div class="metric-box"><div class="title">Other statuses</div><div id="no-date-other" class="num">--</div></div>
+            <div class="metric-box"><div class="title">Scheduled (on track)</div><div id="backlog-future-count" class="num">--</div></div>
+            <div class="metric-box"><div class="title">Total remaining backlog</div><div id="backlog-total-count" class="num">--</div></div>
+            <div class="metric-box"><div class="title">In remediation (pre-block)</div><div id="backlog-remediation-count" class="num">--</div></div>
+            <div class="metric-box"><div class="title">Unscheduled backlog</div><div id="backlog-unscheduled-count" class="num">--</div></div>
           </div>
         </div>
       </div>
@@ -845,9 +845,20 @@ function summarizeDd9(rows, remainingTenants, remainingStorage, snapshotDate) {
   };
 }
 
-function summarizeDd10PastSla(dd10Rows) {
+function summarizeDd10BlockSplits(dd10Rows) {
   if (!dd10Rows.length) {
-    return { count: 0, storagePb: 0 };
+    return {
+      noDateNotOverdueCount: 0,
+      noDateNotOverduePb: 0,
+      scheduledCount: 0,
+      scheduledPb: 0,
+      overdueCount: 0,
+      overduePb: 0,
+      otherCount: 0,
+      otherPb: 0,
+      totalCount: 0,
+      totalPb: 0
+    };
   }
 
   const header = dd10Rows[0] || [];
@@ -860,56 +871,75 @@ function summarizeDd10PastSla(dd10Rows) {
   const storageTbIndex = indexByName.get('STORAGE_TB');
 
   if (statusIndex === undefined || inPlanIndex === undefined || dueBucketIndex === undefined || storageTbIndex === undefined) {
-    return { count: 0, storagePb: 0 };
+    return {
+      noDateNotOverdueCount: 0,
+      noDateNotOverduePb: 0,
+      scheduledCount: 0,
+      scheduledPb: 0,
+      overdueCount: 0,
+      overduePb: 0,
+      otherCount: 0,
+      otherPb: 0,
+      totalCount: 0,
+      totalPb: 0
+    };
   }
 
-  let count = 0;
-  let storageTb = 0;
+  let noDateNotOverdueCount = 0;
+  let noDateNotOverdueTb = 0;
+  let scheduledCount = 0;
+  let scheduledTb = 0;
+  let overdueCount = 0;
+  let overdueTb = 0;
+  let otherCount = 0;
+  let otherTb = 0;
 
   dataRows.forEach((row) => {
     const status = String(row[statusIndex] || '').trim();
     const inPlan = String(row[inPlanIndex] || '').trim();
     const dueBucket = String(row[dueBucketIndex] || '').trim();
+    const storageTb = parseNumber(row[storageTbIndex]);
 
-    if (status === 'BLOCK_COMPLETED' && inPlan === '0' && dueBucket === 'DUE_OR_OVERDUE') {
-      count += 1;
-      storageTb += parseNumber(row[storageTbIndex]);
+    if (status !== 'BLOCK_COMPLETED') {
+      return;
     }
+
+    if (inPlan === '1') {
+      scheduledCount += 1;
+      scheduledTb += storageTb;
+      return;
+    }
+
+    if (inPlan === '0' && dueBucket === 'DUE_OR_OVERDUE') {
+      overdueCount += 1;
+      overdueTb += storageTb;
+      return;
+    }
+
+    if (inPlan === '0' && dueBucket === 'NO_DATE_YET') {
+      noDateNotOverdueCount += 1;
+      noDateNotOverdueTb += storageTb;
+      return;
+    }
+
+    otherCount += 1;
+    otherTb += storageTb;
   });
 
-  return { count, storagePb: storageTb / 1024 };
-}
-
-function summarizeDd10NoDateBreakdown(dd10Rows) {
-  if (!dd10Rows.length) {
-    return { autoCount: 0, autoStoragePb: 0 };
-  }
-
-  const header = dd10Rows[0] || [];
-  const dataRows = dd10Rows.slice(1);
-  const indexByName = new Map(header.map((name, index) => [name, index]));
-
-  const dueBucketIndex = indexByName.get('DUE_BUCKET');
-  const statusIndex = indexByName.get('CURRENT_STATUS');
-  const storageTbIndex = indexByName.get('STORAGE_TB');
-
-  if (dueBucketIndex === undefined || statusIndex === undefined || storageTbIndex === undefined) {
-    return { autoCount: 0, autoStoragePb: 0 };
-  }
-
-  let autoCount = 0;
-  let autoStorageTb = 0;
-
-  dataRows.forEach((row) => {
-    const dueBucket = String(row[dueBucketIndex] || '').trim();
-    const status = String(row[statusIndex] || '').trim();
-    if (dueBucket === 'NO_DATE_YET' && status === 'AUTO_REMEDIATED') {
-      autoCount += 1;
-      autoStorageTb += parseNumber(row[storageTbIndex]);
-    }
-  });
-
-  return { autoCount, autoStoragePb: autoStorageTb / 1024 };
+  const totalCount = noDateNotOverdueCount + scheduledCount + overdueCount + otherCount;
+  const totalPb = (noDateNotOverdueTb + scheduledTb + overdueTb + otherTb) / 1024;
+  return {
+    noDateNotOverdueCount,
+    noDateNotOverduePb: noDateNotOverdueTb / 1024,
+    scheduledCount,
+    scheduledPb: scheduledTb / 1024,
+    overdueCount,
+    overduePb: overdueTb / 1024,
+    otherCount,
+    otherPb: otherTb / 1024,
+    totalCount,
+    totalPb
+  };
 }
 
 async function renderDashboard() {
@@ -1026,27 +1056,17 @@ async function renderDashboard() {
     setHtml('pipeline-note', `<strong>Main bottleneck:</strong> <strong>blocked — awaiting scheduling</strong> (${formatCount(blockedRow[1])} tenants, ${formatPb(blockedRow[2])} storage) is the biggest constraint. Second priority: <strong>in remediation</strong> (${formatCount(readonlyTotal)} tenants) needing block completion before scheduling.`);
 
     // Remediation pipeline snapshot (same semantics as flow preview)
-    const blockNoScheduleCount = parseNumber(blockedRow?.[1] ?? 0);
-    const blockNoSchedulePb = parseNumber(blockedRow?.[2] ?? 0);
-    const blockScheduledCount = parseNumber(scheduledRow?.[1] ?? 0);
-    const blockScheduledPb = parseNumber(scheduledRow?.[2] ?? 0);
-    const blockOtherCount = Math.max(parseNumber(dd1[4]) - blockNoScheduleCount - blockScheduledCount - readonlyTotal, 0);
-    const blockOtherPb = Math.max(parseNumber(dd1[5]) - blockNoSchedulePb - blockScheduledPb - parseNumber(readonlyStorageTotal), 0);
-
-    // DD10-based subset: blocked, not in plan for deletion, and already overdue.
-    const dd10PastSla = summarizeDd10PastSla(dd10Rows);
-    const blockSlaOverdueCount = dd10PastSla.count;
-    const blockSlaOverduePb = dd10PastSla.storagePb;
+    const blockSplits = summarizeDd10BlockSplits(dd10Rows);
 
     setText('flow-readonly-main', formatCountStorage(readonlyTotal, parseNumber(readonlyStorageTotal)));
     setText('flow-readonly-planned', `${formatCount(parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[1] ?? 0))} | ${formatPb(parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[2] ?? 0))}`);
     setText('flow-readonly-progress', `${formatCount(parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[1] ?? 0))} | ${formatPb(parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[2] ?? 0))}`);
 
-    setText('flow-block-main', formatCountStorage(blockNoScheduleCount + blockScheduledCount + blockOtherCount, blockNoSchedulePb + blockScheduledPb + blockOtherPb));
-    setText('flow-block-nosched', formatCountStorage(blockNoScheduleCount - blockSlaOverdueCount, blockNoSchedulePb - blockSlaOverduePb));
-    setText('flow-block-sched', formatCountStorage(blockScheduledCount, blockScheduledPb));
-    setText('flow-block-overdue', formatCountStorage(blockSlaOverdueCount, blockSlaOverduePb));
-    setText('flow-block-other', formatCountStorage(blockOtherCount, blockOtherPb));
+    setText('flow-block-main', formatCountStorage(blockSplits.totalCount, blockSplits.totalPb));
+    setText('flow-block-nosched', formatCountStorage(blockSplits.noDateNotOverdueCount, blockSplits.noDateNotOverduePb));
+    setText('flow-block-sched', formatCountStorage(blockSplits.scheduledCount, blockSplits.scheduledPb));
+    setText('flow-block-overdue', formatCountStorage(blockSplits.overdueCount, blockSplits.overduePb));
+    setText('flow-block-other', formatCountStorage(blockSplits.otherCount, blockSplits.otherPb));
 
     setText('flow-delete-main', formatCountStorage(parseNumber(dd1[2]), parseNumber(dd1[3])));
     setText('flow-delete-last14', `${formatCount(parseNumber(dd5[1]))} | ${formatPb(parseNumber(last14?.[2] ?? 0))}`);
@@ -1060,24 +1080,20 @@ async function renderDashboard() {
     setText('exec-success-title', `Deleted (${parseNumber(dd5[4]).toFixed(2)}%)`);
     setText('exec-failure-title', `Errored (${parseNumber(dd5[5]).toFixed(2)}%)`);
     setText('exec-pending-title', 'Delete error rate');
-    setHtml('exec-note', '<strong>Signal:</strong> DD5 now follows engineering terminal-status logic (STATUS in 1/-1) from PROCESS_DELETE_TENANTS joined to TENANT_ACTIONS_SCHD.');
+    setHtml('exec-note', '<strong>Signal:</strong> Execution metrics reflect terminal delete outcomes for the active run window.');
 
-    // No Delete Date Set metrics
-    setText('no-date-count', formatCount(noDateCount));
-    setText('no-date-storage', formatPb(noDatePb));
-    const readonlyCompleteAwaitingBlock = parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[1] ?? 0);
-    const readonlyInProgress = parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[1] ?? 0);
-    const noDateAutoFromDd10 = summarizeDd10NoDateBreakdown(dd10Rows);
-    const noDateOtherCount = Math.max(noDateCount - readonlyCompleteAwaitingBlock - readonlyInProgress - noDateAutoFromDd10.autoCount, 0);
-    setText('no-date-ro-block', formatCount(readonlyCompleteAwaitingBlock));
-    setText('no-date-ro-progress', formatCount(readonlyInProgress));
-    setText('no-date-auto', formatCount(noDateAutoFromDd10.autoCount));
-    setText('no-date-other', formatCount(noDateOtherCount));
+    const unscheduledBacklogCount = Math.max(remainingTenants - dueNowCount - futureCount, 0);
+    setText('backlog-overdue-count', formatCount(dueNowCount));
+    setText('backlog-overdue-storage', formatPb(dueNowPb));
+    setText('backlog-future-count', formatCount(futureCount));
+    setText('backlog-total-count', formatCount(remainingTenants));
+    setText('backlog-remediation-count', formatCount(readonlyTotal));
+    setText('backlog-unscheduled-count', formatCount(unscheduledBacklogCount));
 
     renderSourceTable(dd4);
     setHtml('source-note', 'Tenant deletion velocity accelerates when deletions shift from low-storage R0 tenants to higher-storage cohorts (R4, R2, R3). Track both tenant count and storage reclaim to see progress on both axes.');
 
-    setHtml('data-note', '<strong>Data note:</strong> Scope, velocity, source, execution, and stage metrics come from DD1, DD2, DD4, DD5, DD6, DD8 CSVs. Backlog breakdown uses DD9 with support for both legacy summary output and current SUMMARY/WEEKLY output. The Block past-SLA split is derived from DD10 (BLOCK_COMPLETED + IN_PLAN_FOR_DELETION=0 + DUE_OR_OVERDUE).');
+    setHtml('data-note', '<strong>Data note:</strong> Scope, velocity, source, execution, and stage metrics come from the latest CSV snapshot set. Backlog breakdown supports both legacy and current summary layouts. Block-stage splits are fully derived from row-level block status fields (completed block state, plan flag, and due bucket).');
   } catch (error) {
     setHtml('snapshot-note', `<strong>Load error:</strong> ${error.message}. Serve this folder over HTTP so the dashboard can fetch its CSV snapshot files.`);
   }
