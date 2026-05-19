@@ -420,7 +420,7 @@ body {
     <h1>Tenant Deletion Plan Dashboard</h1>
   </div>
 
-  <div id="snapshot-note" style="margin-bottom: 8px; color: var(--muted); font-size: 12px;" data-as-of="2026-05-14">
+  <div id="snapshot-note" style="margin-bottom: 8px; color: var(--muted); font-size: 12px;" data-as-of="2026-05-19">
     Report Date: --
   </div>
 
@@ -880,6 +880,38 @@ function summarizeDd10PastSla(dd10Rows) {
   return { count, storagePb: storageTb / 1024 };
 }
 
+function summarizeDd10NoDateBreakdown(dd10Rows) {
+  if (!dd10Rows.length) {
+    return { autoCount: 0, autoStoragePb: 0 };
+  }
+
+  const header = dd10Rows[0] || [];
+  const dataRows = dd10Rows.slice(1);
+  const indexByName = new Map(header.map((name, index) => [name, index]));
+
+  const dueBucketIndex = indexByName.get('DUE_BUCKET');
+  const statusIndex = indexByName.get('CURRENT_STATUS');
+  const storageTbIndex = indexByName.get('STORAGE_TB');
+
+  if (dueBucketIndex === undefined || statusIndex === undefined || storageTbIndex === undefined) {
+    return { autoCount: 0, autoStoragePb: 0 };
+  }
+
+  let autoCount = 0;
+  let autoStorageTb = 0;
+
+  dataRows.forEach((row) => {
+    const dueBucket = String(row[dueBucketIndex] || '').trim();
+    const status = String(row[statusIndex] || '').trim();
+    if (dueBucket === 'NO_DATE_YET' && status === 'AUTO_REMEDIATED') {
+      autoCount += 1;
+      autoStorageTb += parseNumber(row[storageTbIndex]);
+    }
+  });
+
+  return { autoCount, autoStoragePb: autoStorageTb / 1024 };
+}
+
 async function renderDashboard() {
   try {
     const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, dd9Text, dd10Text] = await Promise.all([
@@ -1035,10 +1067,12 @@ async function renderDashboard() {
     setText('no-date-storage', formatPb(noDatePb));
     const readonlyCompleteAwaitingBlock = parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[1] ?? 0);
     const readonlyInProgress = parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[1] ?? 0);
+    const noDateAutoFromDd10 = summarizeDd10NoDateBreakdown(dd10Rows);
+    const noDateOtherCount = Math.max(noDateCount - readonlyCompleteAwaitingBlock - readonlyInProgress - noDateAutoFromDd10.autoCount, 0);
     setText('no-date-ro-block', formatCount(readonlyCompleteAwaitingBlock));
     setText('no-date-ro-progress', formatCount(readonlyInProgress));
-    setText('no-date-auto', '6');
-    setText('no-date-other', '48');
+    setText('no-date-auto', formatCount(noDateAutoFromDd10.autoCount));
+    setText('no-date-other', formatCount(noDateOtherCount));
 
     renderSourceTable(dd4);
     setHtml('source-note', 'Tenant deletion velocity accelerates when deletions shift from low-storage R0 tenants to higher-storage cohorts (R4, R2, R3). Track both tenant count and storage reclaim to see progress on both axes.');
