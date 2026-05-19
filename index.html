@@ -256,8 +256,8 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
     <div class="card" style="padding: 16px;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
         <div>
-          <div style="font-size: 13px; font-weight: 700; color: var(--text);">Storage Detected</div>
-          <div style="font-size: 10px; color: var(--text-muted);">Biweekly bars + cumulative line (Nov '25 → Now)</div>
+          <div style="font-size: 13px; font-weight: 700; color: var(--text);">Storage Remediated</div>
+          <div style="font-size: 10px; color: var(--text-muted);">Biweekly bars (actioned) + cumulative line (Nov '25 → Now)</div>
         </div>
         <div style="display: flex; gap: 8px; align-items: stretch;">
           <div id="hero-storage-pill" style="background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2); border-radius: 8px; padding: 6px 12px; text-align: center; min-width: 80px;">
@@ -1194,24 +1194,25 @@ function renderCumulativeChart() {
 }
 
 function renderHeroTrend() {
-  // Use A4 (detection per biweekly period) for bars; fall back to C2b then C2
-  const useA4 = DATA.A4 && DATA.A4.length > 0;
-  const useC2b = !useA4 && DATA.C2b && DATA.C2b.length > 0;
-  if (!useA4 && !useC2b && !DATA.C2) return;
+  // C2b = de-duped biweekly remediation (each tenant counted once when remediated)
+  // Bars = storage remediated per period; Line = cumulative remediated (matches green pill)
+  // Blue pill "Detected" comes from A1 (new fraud found this period — different metric)
+  const useC2b = DATA.C2b && DATA.C2b.length > 0;
+  if (!useC2b && !DATA.C2) return;
   destroyChart('hero-trend');
   const canvas = document.getElementById('chart-hero-trend');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  if (useA4) {
-    // Biweekly A4 (detected): sorted oldest→newest by period_num DESC (highest period_num = oldest)
-    const sorted = [...DATA.A4].sort((a, b) => b.period_num - a.period_num);
+  if (useC2b) {
+    // Biweekly C2b: sorted oldest→newest by period_num DESC (highest period_num = oldest)
+    const sorted = [...DATA.C2b].sort((a, b) => b.period_num - a.period_num);
     const fmBi = d => { const p = d.split('-'); const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return mn[parseInt(p[1])-1] + ' ' + parseInt(p[2]); };
     const labels = sorted.map(d => fmBi(d.period_start));
-    // fixStorageUnits() already converted storage_pb → storage_tb
+    // fixStorageUnits() already converted storage_pb → storage_tb, cumulative_pb → cumulative_tb
     const storageTB = sorted.map(d => d.storage_tb || 0);
-    let running = 0;
-    const cumulative = storageTB.map(v => { running += v; return running; });
+    // Use pre-computed cumulative from C2b (authoritative, matches green pill = 94 PB)
+    const cumulative = sorted.map(d => d.cumulative_tb || 0);
     const barBg = storageTB.map((_, i) => i === storageTB.length - 1 ? 'rgba(37,99,235,0.85)' : 'rgba(59,130,246,0.5)');
     const barBd = storageTB.map((_, i) => i === storageTB.length - 1 ? '#1d4ed8' : '#3b82f6');
 
@@ -1220,8 +1221,8 @@ function renderHeroTrend() {
       data: {
         labels: labels,
         datasets: [
-          { label: 'Biweekly', data: storageTB, backgroundColor: barBg, borderColor: barBd, borderWidth: 1, borderRadius: 4, yAxisID: 'y', order: 2 },
-          { label: 'Cumulative', data: cumulative, type: 'line', borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.06)', borderWidth: 2.5, pointRadius: cumulative.map((_, i) => i === cumulative.length - 1 ? 6 : 3), pointBackgroundColor: cumulative.map((_, i) => i === cumulative.length - 1 ? '#16a34a' : '#22c55e'), fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
+          { label: 'Remediated', data: storageTB, backgroundColor: barBg, borderColor: barBd, borderWidth: 1, borderRadius: 4, yAxisID: 'y', order: 2 },
+          { label: 'Cumulative Remediated', data: cumulative, type: 'line', borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.06)', borderWidth: 2.5, pointRadius: cumulative.map((_, i) => i === cumulative.length - 1 ? 6 : 3), pointBackgroundColor: cumulative.map((_, i) => i === cumulative.length - 1 ? '#16a34a' : '#22c55e'), fill: true, tension: 0.3, yAxisID: 'y1', order: 1 }
         ]
       },
       options: {
@@ -1232,7 +1233,7 @@ function renderHeroTrend() {
         },
         scales: {
           x: { ticks: { font: { size: 9 }, maxRotation: 45 }, grid: { display: false } },
-          y:  { position: 'left', title: { display: true, text: 'Biweekly (TB)', font: { size: 10 } }, ticks: { callback: v => fmtStorage(v), font: { size: 9 } }, beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+          y:  { position: 'left', title: { display: true, text: 'Remediated (TB)', font: { size: 10 } }, ticks: { callback: v => fmtStorage(v), font: { size: 9 } }, beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
           y1: { position: 'right', title: { display: true, text: 'Cumulative (TB)', font: { size: 10 } }, ticks: { callback: v => fmtStorage(v), font: { size: 9 } }, beginAtZero: true, grid: { drawOnChartArea: false } }
         }
       }
