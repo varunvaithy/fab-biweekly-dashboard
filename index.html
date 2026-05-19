@@ -462,104 +462,7 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
 
 <!-- =========== PAGE 4: DELETION PLAN =========== -->
 <div class="page" id="page-deletion">
-  <h2 style="margin-bottom:6px;">Deletion Plan Dashboard</h2>
-  <p class="subtitle" style="color:#666;margin-bottom:18px;">Tracks tenant deletion pipeline from scope → RO → Block → Delete</p>
-
-  <!-- KPI Cards -->
-  <div class="grid-3" id="del-kpi-row">
-    <div class="card" style="border-top:3px solid #2196F3;">
-      <h3>In Scope</h3>
-      <div class="big" id="del-in-scope-tenants">—</div>
-      <div class="sub" id="del-in-scope-storage">—</div>
-    </div>
-    <div class="card" style="border-top:3px solid #4CAF50;">
-      <h3>Deleted to Date</h3>
-      <div class="big" id="del-deleted-tenants">—</div>
-      <div class="sub" id="del-deleted-storage">—</div>
-    </div>
-    <div class="card" style="border-top:3px solid #FF9800;">
-      <h3>Remaining Backlog</h3>
-      <div class="big" id="del-remaining-tenants">—</div>
-      <div class="sub" id="del-remaining-storage">—</div>
-    </div>
-  </div>
-
-  <!-- Pipeline Progress Bar -->
-  <div class="card" style="margin-top:12px;">
-    <h3>Pipeline Progress</h3>
-    <div style="display:flex;align-items:center;height:32px;border-radius:6px;overflow:hidden;background:#eee;margin:8px 0;">
-      <div id="del-bar-deleted" style="height:100%;background:#4CAF50;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;"></div>
-      <div id="del-bar-ready" style="height:100%;background:#FF9800;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;"></div>
-      <div id="del-bar-pipeline" style="height:100%;background:#2196F3;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;"></div>
-    </div>
-    <div style="display:flex;gap:16px;font-size:11px;color:#666;margin-top:4px;">
-      <span>&#9632; Deleted</span> <span style="color:#FF9800;">&#9632; Ready to Delete</span> <span style="color:#2196F3;">&#9632; In Pipeline</span>
-    </div>
-  </div>
-
-  <!-- Velocity -->
-  <div class="card" style="margin-top:12px;">
-    <h3>Delete Velocity</h3>
-    <table class="tbl" id="del-velocity-table">
-      <thead><tr><th>Window</th><th>Tenants Deleted</th><th>Storage (PB)</th><th>Rate /wk</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- Pipeline Stages -->
-  <div class="card" style="margin-top:12px;">
-    <h3>Where Backlog Is Stuck</h3>
-    <div id="del-stages-bars"></div>
-  </div>
-
-  <!-- Backlog Breakdown -->
-  <div class="card" style="margin-top:12px;">
-    <h3>Backlog Breakdown (Scheduling)</h3>
-    <div class="grid-3" id="del-backlog-grid">
-      <div style="text-align:center;padding:10px;">
-        <div style="font-size:20px;font-weight:700;color:#f44336;" id="del-bl-due">—</div>
-        <div style="font-size:11px;color:#666;">Due/Overdue</div>
-      </div>
-      <div style="text-align:center;padding:10px;">
-        <div style="font-size:20px;font-weight:700;color:#2196F3;" id="del-bl-future">—</div>
-        <div style="font-size:11px;color:#666;">Future-Dated</div>
-      </div>
-      <div style="text-align:center;padding:10px;">
-        <div style="font-size:20px;font-weight:700;color:#9E9E9E;" id="del-bl-nodate">—</div>
-        <div style="font-size:11px;color:#666;">No Date Yet</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Source Breakdown -->
-  <div class="card" style="margin-top:12px;">
-    <h3>Deletion by Source</h3>
-    <table class="tbl" id="del-source-table">
-      <thead><tr><th>Source</th><th>Remaining</th><th>Storage (PB)</th><th>Ready</th><th>Ready Storage (PB)</th><th>Deleted</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- Execution Metrics -->
-  <div class="card" style="margin-top:12px;">
-    <h3>Execution Metrics</h3>
-    <div class="grid-3">
-      <div style="text-align:center;padding:10px;">
-        <div style="font-size:22px;font-weight:700;color:#4CAF50;" id="del-exec-success">—</div>
-        <div style="font-size:11px;color:#666;">Success Rate</div>
-      </div>
-      <div style="text-align:center;padding:10px;">
-        <div style="font-size:22px;font-weight:700;" id="del-exec-attempts">—</div>
-        <div style="font-size:11px;color:#666;">Total Attempts</div>
-      </div>
-      <div style="text-align:center;padding:10px;">
-        <div style="font-size:22px;font-weight:700;color:#f44336;" id="del-exec-failures">—</div>
-        <div style="font-size:11px;color:#666;">Failures</div>
-      </div>
-    </div>
-  </div>
-
-  <p style="font-size:11px;color:#999;margin-top:12px;text-align:right;">Data as of <span id="del-as-of">—</span></p>
+  <iframe id="deletion-plan-frame" src="deletion-plan/deletion-plan.html" style="width:100%;border:none;min-height:800px;" onload="this.style.height=this.contentDocument.body.scrollHeight+'px'"></iframe>
 </div>
 
 <!-- =========== PAGE 5: INVESTIGATIONS =========== -->
@@ -736,9 +639,6 @@ const DATA = {
 
   // G7: Remediated by Source
   G7: [{"source":"Rules","tenants":24717,"storage_tb":67887.31},{"source":"DS Model","tenants":703,"storage_tb":15436.548},{"source":"Investigation","tenants":179,"storage_tb":8882.824},{"source":"Other","tenants":99,"storage_tb":3516.773},{"source":"Manual","tenants":71,"storage_tb":549.76}],
-
-  // Deletion Plan (pre-computed from DD1-DD10)
-  DELETION_PLAN: {"kpi":{"inScopeTenants":26066,"inScopeStorage":94.57,"deletedTenants":1979,"deletedStorage":0.94,"remainingTenants":24087,"remainingStorage":93.63,"readyToDeleteTenants":12416,"readyToDeleteStorage":54.82,"pipelineTenants":11620,"pipelineStorage":38.52},"velocity":{"last7":{"deleted":1365,"storage":0.89,"rate":1365},"prior7":{"deleted":613,"storage":0.05,"rate":613},"total":{"deleted":1978,"storage":0.94,"rate":865.38},"last14Storage":0.94},"sources":[{"source":"R4","deletedTenants":17,"deletedStorage":0.88,"remainingTenants":636,"remainingStorage":28.63,"readyTenants":416,"readyStorage":18.77},{"source":"DS Model (2026)","deletedTenants":0,"deletedStorage":0,"remainingTenants":703,"remainingStorage":15.07,"readyTenants":0,"readyStorage":0},{"source":"R2","deletedTenants":2,"deletedStorage":0.03,"remainingTenants":416,"remainingStorage":13.72,"readyTenants":379,"readyStorage":12.8},{"source":"R3","deletedTenants":1,"deletedStorage":0.01,"remainingTenants":971,"remainingStorage":11.21,"readyTenants":796,"readyStorage":9.08},{"source":"Adhoc Investigation","deletedTenants":0,"deletedStorage":0,"remainingTenants":179,"remainingStorage":8.67,"readyTenants":3,"readyStorage":0.82},{"source":"R0","deletedTenants":1945,"deletedStorage":0,"remainingTenants":20989,"remainingStorage":8.67,"readyTenants":10722,"readyStorage":7.8},{"source":"R5","deletedTenants":1,"deletedStorage":0.02,"remainingTenants":59,"remainingStorage":3.73,"readyTenants":30,"readyStorage":2.06},{"source":"Other (RC=10)","deletedTenants":0,"deletedStorage":0,"remainingTenants":26,"remainingStorage":2.41,"readyTenants":26,"readyStorage":2.41},{"source":"Other (RC=5)","deletedTenants":12,"deletedStorage":0,"remainingTenants":8,"remainingStorage":0.54,"readyTenants":7,"readyStorage":0.43},{"source":"Manual (no RC)","deletedTenants":1,"deletedStorage":0,"remainingTenants":74,"remainingStorage":0.35,"readyTenants":21,"readyStorage":0.25},{"source":"R1","deletedTenants":0,"deletedStorage":0,"remainingTenants":12,"remainingStorage":0.22,"readyTenants":9,"readyStorage":0.2},{"source":"Other (RC=79)","deletedTenants":0,"deletedStorage":0,"remainingTenants":6,"remainingStorage":0.21,"readyTenants":5,"readyStorage":0.18},{"source":"Other (RC=102)","deletedTenants":0,"deletedStorage":0,"remainingTenants":2,"remainingStorage":0.14,"readyTenants":0,"readyStorage":0},{"source":"Other (RC=1)","deletedTenants":0,"deletedStorage":0,"remainingTenants":1,"remainingStorage":0.03,"readyTenants":0,"readyStorage":0},{"source":"Rules-Other","deletedTenants":0,"deletedStorage":0,"remainingTenants":2,"remainingStorage":0.02,"readyTenants":1,"readyStorage":0.02},{"source":"A1 DS Model (deprecated)","deletedTenants":0,"deletedStorage":0,"remainingTenants":3,"remainingStorage":0,"readyTenants":1,"readyStorage":0}],"execution":{"attempts":2096,"successes":1975,"failures":121,"pending":0,"successRate":94.23,"failureRate":5.77},"stages":[{"stage":"DELETE_SCHEDULED_NOT_DONE","tenants":12416,"storage":54.82},{"stage":"BLOCKED_NOT_SCHEDULED","tenants":6097,"storage":35.62},{"stage":"READONLY_COMPLETE_AWAITING_BLOCK","tenants":5196,"storage":2.43},{"stage":"READONLY_IN_PROGRESS","tenants":327,"storage":0.47}],"backlog":{"dueCount":1386,"dueStorage":12.33,"futureCount":17113,"futureStorage":78.07,"noDateCount":5587,"noDateStorage":3.22},"blockSplits":{"noDateNotOverdue":{"count":0,"storage":0},"scheduled":{"count":12414,"storage":54.82},"overdue":{"count":1089,"storage":12.31},"other":{"count":4990,"storage":23.25},"total":{"count":18493,"storage":90.38}},"asOf":"2026-05-19"},
 };
 
 // ============================================================================
@@ -3113,89 +3013,6 @@ function renderPipelineSnapshot() {
 // INIT — Call all renderers
 // ============================================================================
 
-// ============================================================================
-// DELETION PLAN RENDERER
-// ============================================================================
-function renderDeletionPlan() {
-  const dp = DATA.DELETION_PLAN;
-  if (!dp) return;
-  const k = dp.kpi;
-
-  // KPIs
-  const fmt = n => n >= 1000 ? n.toLocaleString() : n;
-  document.getElementById('del-in-scope-tenants').textContent = fmt(k.inScopeTenants) + ' tenants';
-  document.getElementById('del-in-scope-storage').textContent = k.inScopeStorage.toFixed(2) + ' PB';
-  document.getElementById('del-deleted-tenants').textContent = fmt(k.deletedTenants) + ' tenants';
-  document.getElementById('del-deleted-storage').textContent = k.deletedStorage.toFixed(2) + ' PB';
-  document.getElementById('del-remaining-tenants').textContent = fmt(k.remainingTenants) + ' tenants';
-  document.getElementById('del-remaining-storage').textContent = k.remainingStorage.toFixed(2) + ' PB';
-
-  // Pipeline progress bar
-  const total = k.inScopeStorage;
-  const pctDel = ((k.deletedStorage / total) * 100).toFixed(1);
-  const pctReady = ((k.readyToDeleteStorage / total) * 100).toFixed(1);
-  const pctPipe = ((k.pipelineStorage / total) * 100).toFixed(1);
-  document.getElementById('del-bar-deleted').style.width = pctDel + '%';
-  document.getElementById('del-bar-deleted').textContent = pctDel > 3 ? pctDel + '%' : '';
-  document.getElementById('del-bar-ready').style.width = pctReady + '%';
-  document.getElementById('del-bar-ready').textContent = pctReady > 3 ? pctReady + '% Ready' : '';
-  document.getElementById('del-bar-pipeline').style.width = pctPipe + '%';
-  document.getElementById('del-bar-pipeline').textContent = pctPipe > 3 ? pctPipe + '% Pipeline' : '';
-
-  // Velocity table
-  const v = dp.velocity;
-  const vBody = document.querySelector('#del-velocity-table tbody');
-  vBody.innerHTML = [
-    ['Last 7 days', v.last7.deleted, v.last7.storage, v.last7.rate + '/wk'],
-    ['Prior 7 days', v.prior7.deleted, v.prior7.storage.toFixed(2), v.prior7.rate + '/wk'],
-    ['Since scope start', v.total.deleted, v.total.storage, v.total.rate + '/wk']
-  ].map(r => `<tr><td>${r[0]}</td><td>${fmt(r[1])}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
-
-  // Pipeline stages bars
-  const stagesEl = document.getElementById('del-stages-bars');
-  const maxStorage = Math.max(...dp.stages.map(s => s.storage));
-  const stageLabels = {
-    'DELETE_SCHEDULED_NOT_DONE': 'Delete Scheduled',
-    'BLOCKED_NOT_SCHEDULED': 'Blocked (not scheduled)',
-    'READONLY_COMPLETE_AWAITING_BLOCK': 'RO Complete → Block',
-    'READONLY_IN_PROGRESS': 'RO In Progress'
-  };
-  const stageColors = ['#f44336','#FF9800','#2196F3','#9E9E9E'];
-  stagesEl.innerHTML = dp.stages.map((s, i) => {
-    const pct = maxStorage > 0 ? ((s.storage / maxStorage) * 100).toFixed(0) : 0;
-    const label = stageLabels[s.stage] || s.stage;
-    return `<div style="margin:8px 0;">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px;">
-        <span>${label}</span>
-        <span style="color:#666;">${fmt(s.tenants)} tenants · ${s.storage.toFixed(2)} PB</span>
-      </div>
-      <div style="height:18px;background:#eee;border-radius:4px;overflow:hidden;">
-        <div style="width:${pct}%;height:100%;background:${stageColors[i]};border-radius:4px;"></div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Backlog breakdown
-  const bl = dp.backlog;
-  document.getElementById('del-bl-due').innerHTML = `${fmt(bl.dueCount)}<br><span style="font-size:11px;">${bl.dueStorage.toFixed(2)} PB</span>`;
-  document.getElementById('del-bl-future').innerHTML = `${fmt(bl.futureCount)}<br><span style="font-size:11px;">${bl.futureStorage.toFixed(2)} PB</span>`;
-  document.getElementById('del-bl-nodate').innerHTML = `${fmt(bl.noDateCount)}<br><span style="font-size:11px;">${bl.noDateStorage.toFixed(2)} PB</span>`;
-
-  // Source table
-  const sBody = document.querySelector('#del-source-table tbody');
-  sBody.innerHTML = dp.sources.map(s =>
-    `<tr><td>${s.source}</td><td>${fmt(s.remainingTenants)}</td><td>${s.remainingStorage.toFixed(2)}</td><td>${fmt(s.readyTenants)}</td><td>${s.readyStorage.toFixed(2)}</td><td>${fmt(s.deletedTenants)}</td></tr>`
-  ).join('');
-
-  // Execution metrics
-  document.getElementById('del-exec-success').textContent = dp.execution.successRate + '%';
-  document.getElementById('del-exec-attempts').textContent = fmt(dp.execution.attempts);
-  document.getElementById('del-exec-failures').textContent = fmt(dp.execution.failures);
-
-  // As-of date
-  document.getElementById('del-as-of').textContent = dp.asOf;
-}
-
 function init() {
   const safe = (fn, name) => { try { fn(); } catch(e) { console.warn('[FAB] ' + name + ' failed:', e.message); } };
 
@@ -3236,7 +3053,6 @@ function init() {
   safe(() => renderGeo(), 'renderGeo');
   safe(() => renderCategoryTrend(), 'renderCategoryTrend');
   safe(() => renderInvestigations(), 'renderInvestigations');
-  safe(() => renderDeletionPlan(), 'renderDeletionPlan');
 }
 
 init();
