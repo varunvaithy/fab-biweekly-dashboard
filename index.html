@@ -1194,17 +1194,18 @@ function renderCumulativeChart() {
 }
 
 function renderHeroTrend() {
-  // Prefer biweekly C2b data; fall back to monthly C2
-  const useC2b = DATA.C2b && DATA.C2b.length > 0;
-  if (!useC2b && !DATA.C2) return;
+  // Use A4 (detection per biweekly period) for bars; fall back to C2b then C2
+  const useA4 = DATA.A4 && DATA.A4.length > 0;
+  const useC2b = !useA4 && DATA.C2b && DATA.C2b.length > 0;
+  if (!useA4 && !useC2b && !DATA.C2) return;
   destroyChart('hero-trend');
   const canvas = document.getElementById('chart-hero-trend');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  if (useC2b) {
-    // Biweekly C2b: sorted oldest→newest by period_num DESC (highest period_num = oldest)
-    const sorted = [...DATA.C2b].sort((a, b) => b.period_num - a.period_num);
+  if (useA4) {
+    // Biweekly A4 (detected): sorted oldest→newest by period_num DESC (highest period_num = oldest)
+    const sorted = [...DATA.A4].sort((a, b) => b.period_num - a.period_num);
     const fmBi = d => { const p = d.split('-'); const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return mn[parseInt(p[1])-1] + ' ' + parseInt(p[2]); };
     const labels = sorted.map(d => fmBi(d.period_start));
     // fixStorageUnits() already converted storage_pb → storage_tb
