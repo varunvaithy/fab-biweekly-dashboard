@@ -531,30 +531,17 @@ body {
   <div class="row-tight">
     <div class="card">
       <h3 class="section-title">Execution & Backlog Status</h3>
-      <div class="muted">Delete execution snapshot (last 14 days) and actionable backlog view</div>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 8px;">
-        <div>
-          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Execution Metrics</div>
-          <div class="small-grid">
-            <div class="metric-box"><div class="title">Terminal outcomes (1/-1)</div><div id="exec-attempts" class="num">--</div></div>
-            <div class="metric-box"><div id="exec-success-title" class="title">Deleted</div><div id="exec-successes" class="num" style="color:var(--green);">--</div></div>
-            <div class="metric-box"><div id="exec-failure-title" class="title">Errored</div><div id="exec-failures" class="num" style="color:var(--red);">--</div></div>
-            <div class="metric-box"><div id="exec-pending-title" class="title">Delete error rate</div><div id="exec-pending" class="num" style="color:var(--red);">--</div></div>
-          </div>
-          <div id="exec-note" class="backend" style="font-size:11px; padding:8px; margin-top:10px;">
-            <strong>Signal:</strong> loading...
-          </div>
+      <div class="muted">Delete execution snapshot (last 14 days)</div>
+      <div style="margin-bottom: 8px;">
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Execution Metrics</div>
+        <div class="small-grid">
+          <div class="metric-box"><div class="title">Terminal outcomes (1/-1)</div><div id="exec-attempts" class="num">--</div></div>
+          <div class="metric-box"><div id="exec-success-title" class="title">Deleted</div><div id="exec-successes" class="num" style="color:var(--green);">--</div></div>
+          <div class="metric-box"><div id="exec-failure-title" class="title">Errored</div><div id="exec-failures" class="num" style="color:var(--red);">--</div></div>
+          <div class="metric-box"><div id="exec-pending-title" class="title">Delete error rate</div><div id="exec-pending" class="num" style="color:var(--red);">--</div></div>
         </div>
-        <div>
-          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Backlog Status</div>
-          <div style="font-size:26px; font-weight:700; margin-bottom:10px; color:var(--red);"><span id="backlog-overdue-count">--</span> | <span id="backlog-overdue-storage">--</span></div>
-          <div style="font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.5;">Overdue backlog needs immediate scheduling/execution focus.</div>
-          <div class="small-grid">
-            <div class="metric-box"><div class="title">Scheduled (on track)</div><div id="backlog-future-count" class="num">--</div></div>
-            <div class="metric-box"><div class="title">Total remaining backlog</div><div id="backlog-total-count" class="num">--</div></div>
-            <div class="metric-box"><div class="title">In remediation (pre-block)</div><div id="backlog-remediation-count" class="num">--</div></div>
-            <div class="metric-box"><div class="title">Unscheduled backlog</div><div id="backlog-unscheduled-count" class="num">--</div></div>
-          </div>
+        <div id="exec-note" class="backend" style="font-size:11px; padding:8px; margin-top:10px;">
+          <strong>Signal:</strong> loading...
         </div>
       </div>
     </div>
@@ -1081,14 +1068,6 @@ async function renderDashboard() {
     setText('exec-failure-title', `Errored (${parseNumber(dd5[5]).toFixed(2)}%)`);
     setText('exec-pending-title', 'Delete error rate');
     setHtml('exec-note', '<strong>Signal:</strong> Execution metrics reflect terminal delete outcomes for the active run window.');
-
-    const unscheduledBacklogCount = Math.max(remainingTenants - dueNowCount - futureCount, 0);
-    setText('backlog-overdue-count', formatCount(dueNowCount));
-    setText('backlog-overdue-storage', formatPb(dueNowPb));
-    setText('backlog-future-count', formatCount(futureCount));
-    setText('backlog-total-count', formatCount(remainingTenants));
-    setText('backlog-remediation-count', formatCount(readonlyTotal));
-    setText('backlog-unscheduled-count', formatCount(unscheduledBacklogCount));
 
     renderSourceTable(dd4);
     setHtml('source-note', 'Tenant deletion velocity accelerates when deletions shift from low-storage R0 tenants to higher-storage cohorts (R4, R2, R3). Track both tenant count and storage reclaim to see progress on both axes.');
