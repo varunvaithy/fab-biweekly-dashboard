@@ -848,28 +848,37 @@ function summarizeDd10BlockSplits(dd10Rows) {
     };
   }
 
-  const header = dd10Rows[0] || [];
-  const dataRows = dd10Rows.slice(1);
-  const indexByName = new Map(header.map((name, index) => [name, index]));
+  const firstRow = dd10Rows[0] || [];
+  const hasHeader = firstRow.includes('CURRENT_STATUS') && firstRow.includes('IN_PLAN_FOR_DELETION');
 
-  const statusIndex = indexByName.get('CURRENT_STATUS');
-  const inPlanIndex = indexByName.get('IN_PLAN_FOR_DELETION');
-  const dueBucketIndex = indexByName.get('DUE_BUCKET');
-  const storageTbIndex = indexByName.get('STORAGE_TB');
+  let dataRows = dd10Rows;
+  let statusIndex = 2;
+  let inPlanIndex = 13;
+  let dueBucketIndex = 11;
+  let storageTbIndex = 6;
 
-  if (statusIndex === undefined || inPlanIndex === undefined || dueBucketIndex === undefined || storageTbIndex === undefined) {
-    return {
-      noDateNotOverdueCount: 0,
-      noDateNotOverduePb: 0,
-      scheduledCount: 0,
-      scheduledPb: 0,
-      overdueCount: 0,
-      overduePb: 0,
-      otherCount: 0,
-      otherPb: 0,
-      totalCount: 0,
-      totalPb: 0
-    };
+  if (hasHeader) {
+    dataRows = dd10Rows.slice(1);
+    const indexByName = new Map(firstRow.map((name, index) => [name, index]));
+    statusIndex = indexByName.get('CURRENT_STATUS');
+    inPlanIndex = indexByName.get('IN_PLAN_FOR_DELETION');
+    dueBucketIndex = indexByName.get('DUE_BUCKET');
+    storageTbIndex = indexByName.get('STORAGE_TB');
+
+    if (statusIndex === undefined || inPlanIndex === undefined || dueBucketIndex === undefined || storageTbIndex === undefined) {
+      return {
+        noDateNotOverdueCount: 0,
+        noDateNotOverduePb: 0,
+        scheduledCount: 0,
+        scheduledPb: 0,
+        overdueCount: 0,
+        overduePb: 0,
+        otherCount: 0,
+        otherPb: 0,
+        totalCount: 0,
+        totalPb: 0
+      };
+    }
   }
 
   let noDateNotOverdueCount = 0;
@@ -946,7 +955,9 @@ async function renderDashboard() {
     const dd2 = parseCsv(dd2Text);
     const dd4 = parseCsv(dd4Text);
     const dd5 = parseCsv(dd5Text)[1] ?? parseCsv(dd5Text)[0];
-    const dd6 = parseCsv(dd6Text).slice(1);
+    const dd6Rows = parseCsv(dd6Text);
+    const dd6HasHeader = (dd6Rows[0] || [])[0] === 'PIPELINE_STAGE';
+    const dd6 = dd6HasHeader ? dd6Rows.slice(1) : dd6Rows;
     const dd8 = parseCsv(dd8Text)[1] ?? parseCsv(dd8Text)[0];
     const dd9Rows = parseCsv(dd9Text);
     const dd10Rows = parseCsv(dd10Text);
