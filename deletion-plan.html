@@ -30,59 +30,42 @@ body {
   padding: 16px;
 }
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+  display: block;
   margin-bottom: 10px;
 }
 .header h1 {
   margin: 0;
   font-size: 24px;
 }
-.sub {
-  color: var(--muted);
-  font-size: 13px;
-  margin-top: 6px;
-}
-.badge {
-  background: #e7eefc;
-  color: var(--primary);
-  border: 1px solid #c9dafc;
-  border-radius: 999px;
-  padding: 7px 12px;
-  font-size: 12px;
-  font-weight: 600;
-}
 .grid-kpi {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  margin-bottom: 10px;
+    margin-bottom: 6px;
 }
 .kpi-pair {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
-  margin-top: 6px;
+    gap: 6px;
+    margin-top: 4px;
 }
 .kpi-dual {
   border: 1px solid #e6ebf5;
   border-radius: 8px;
-  padding: 8px;
+    padding: 6px;
   background: #fbfcff;
 }
 .kpi-dual .unit {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--muted);
   text-transform: uppercase;
 }
 .kpi-dual .val {
   text-align: left;
-  font-size: 22px;
+    font-size: 18px;
   font-weight: 700;
   line-height: 1.1;
-  margin-top: 2px;
+    margin-top: 1px;
 }
 .kpi-wow {
   margin-top: 6px;
@@ -109,17 +92,53 @@ body {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 .kpi-value {
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: -1px;
 }
 .kpi-sub {
-  margin-top: 4px;
+  margin-top: 2px;
   color: var(--muted);
   font-size: 12px;
+}
+/* First 3 hero cards: use larger typography/spacing to reduce empty bottom area */
+.grid-kpi > .card:nth-child(-n+3) .kpi-label {
+  font-size: 12.5px;
+  margin-bottom: 7px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-pair {
+  gap: 9px;
+  margin-top: 7px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-dual {
+  padding: 9px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-dual .unit {
+  font-size: 10.5px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-dual .val {
+  font-size: 22px;
+  margin-top: 2px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-wow {
+  margin-top: 10px;
+  font-size: 12px;
+}
+.grid-kpi > .card:nth-child(-n+3) .kpi-formula {
+  margin-top: 10px;
+  font-size: 11px;
+}
+.grid-kpi > .card:nth-child(4) .kpi-label {
+  font-size: 11px;
+}
+.grid-kpi > .card:nth-child(4) .kpi-dual .unit {
+  font-size: 9px;
+}
+.grid-kpi > .card:nth-child(4) .kpi-dual .val {
+  font-size: 18px;
 }
 .row {
   display: grid;
@@ -337,26 +356,72 @@ body {
   text-transform: uppercase;
   margin-bottom: 4px;
 }
+.flow-preview-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+.flow-arrow {
+  display: grid;
+  place-items: center;
+  color: #7b8799;
+  font-size: 28px;
+  font-weight: 700;
+  min-width: 24px;
+}
+.flow-stage {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fcfdff;
+  padding: 10px;
+}
+.flow-stage h4 {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+}
+.flow-main {
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.4px;
+}
+.flow-main-sub {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.flow-split {
+  margin-top: 9px;
+  border-top: 1px solid #e7ebf2;
+  padding-top: 8px;
+  display: grid;
+  gap: 5px;
+  font-size: 11px;
+}
+.flow-split-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
 @media (max-width: 1100px) {
   .grid-kpi { grid-template-columns: repeat(2, 1fr); }
   .row { grid-template-columns: 1fr; }
   .row-tight { grid-template-columns: 1fr; }
   .ops-grid { grid-template-columns: 1fr 1fr; }
+  .flow-preview-grid { grid-template-columns: 1fr; }
+  .flow-arrow { transform: rotate(90deg); min-height: 18px; }
 }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <div>
-      <h1>Tenant Deletion Plan Dashboard</h1>
-      <div class="sub">CSV snapshot with backlog rollout driven by proposed deletion dates</div>
-    </div>
-    <div class="badge">Data mode: live CSV render</div>
+    <h1>Tenant Deletion Plan Dashboard</h1>
   </div>
 
-  <div id="snapshot-note" style="margin-bottom: 8px; color: var(--muted); font-size: 12px;" data-as-of="2026-05-06">
-    Loading snapshot metrics...
+  <div id="snapshot-note" style="margin-bottom: 8px; color: var(--muted); font-size: 12px;" data-as-of="2026-06-17">
+    Report Date: --
   </div>
 
   <div class="grid-kpi">
@@ -397,6 +462,45 @@ body {
       </div>
   </div>
 
+  <div class="card">
+    <h3 class="section-title">Remediation Pipeline Snapshot</h3>
+    <div class="muted">This is how the 3-state flow feeds into the main dashboard using the latest remediation snapshot data.</div>
+    <div class="flow-preview-grid" style="margin-top:10px;">
+      <section class="flow-stage">
+        <h4>Read-only</h4>
+        <div id="flow-readonly-main" class="flow-main">--</div>
+        <div class="flow-main-sub">tenants | storage</div>
+        <div class="flow-split">
+          <div class="flow-split-row"><span>Moving to Block status in next 7 days (planned)</span><strong id="flow-readonly-planned">--</strong></div>
+          <div class="flow-split-row"><span>ReadOnly in progress</span><strong id="flow-readonly-progress">--</strong></div>
+        </div>
+      </section>
+      <div class="flow-arrow">&#8594;</div>
+      <section class="flow-stage">
+        <h4>Block</h4>
+        <div id="flow-block-main" class="flow-main">--</div>
+        <div class="flow-main-sub">tenants | storage</div>
+        <div class="flow-split">
+          <div class="flow-split-row"><span>No delete date (not yet overdue)</span><strong id="flow-block-nosched">--</strong></div>
+          <div class="flow-split-row"><span>Delete date scheduled, pending completion</span><strong id="flow-block-sched">--</strong></div>
+          <div class="flow-split-row"><span>No delete date (past SLA)</span><strong id="flow-block-overdue" style="color:var(--red);">--</strong></div>
+          <div class="flow-split-row"><span>Other block-completed statuses</span><strong id="flow-block-other">--</strong></div>
+        </div>
+      </section>
+      <div class="flow-arrow">&#8594;</div>
+      <section class="flow-stage">
+        <h4>Delete (Completed)</h4>
+        <div id="flow-delete-main" class="flow-main">--</div>
+        <div class="flow-main-sub">tenants | storage</div>
+        <div class="flow-split">
+          <div class="flow-split-row"><span>Completed deletes in last 14 days</span><strong id="flow-delete-last14">--</strong></div>
+          <div class="flow-split-row"><span>Failure attempts (last 14d)</span><strong id="flow-delete-fail14">--</strong></div>
+          <div class="flow-split-row"><span>In-scope total</span><strong id="flow-inscope-main">--</strong></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
   <div class="row-tight">
     <div class="card">
       <h3 class="section-title">Overall Delete Velocity</h3>
@@ -416,7 +520,7 @@ body {
 
     <div class="card">
       <h3 class="section-title">Where Backlog Is Stuck</h3>
-      <div class="muted">Stage view of the same backlog. This cut shows operating choke points rather than due-date timing.</div>
+      <div class="muted">Pipeline view: shows which stage each tenant cohort is in and where to focus remediation efforts</div>
       <div id="pipeline-bars" class="mini-bars"></div>
       <div id="pipeline-note" class="backend" style="margin-top:12px;">
         <strong>Main bottleneck:</strong> loading...
@@ -426,24 +530,27 @@ body {
 
   <div class="row-tight">
     <div class="card">
-      <h3 class="section-title">Delete Execution Metrics</h3>
-      <div class="muted">Compact execution snapshot (last 14 days)</div>
-      <div class="small-grid">
-        <div class="metric-box"><div class="title">Attempts scheduled</div><div id="exec-attempts" class="num">--</div></div>
-        <div class="metric-box"><div id="exec-success-title" class="title">Succeeded</div><div id="exec-successes" class="num" style="color:var(--green);">--</div></div>
-        <div class="metric-box"><div id="exec-failure-title" class="title">Failed</div><div id="exec-failures" class="num" style="color:var(--red);">--</div></div>
-        <div class="metric-box"><div id="exec-pending-title" class="title">Pending</div><div id="exec-pending" class="num" style="color:var(--amber);">--</div></div>
-      </div>
-      <div id="exec-note" class="backend">
-        <strong>Signal:</strong> loading...
+      <h3 class="section-title">Execution & Backlog Status</h3>
+      <div class="muted">Delete execution snapshot (last 14 days)</div>
+      <div style="margin-bottom: 8px;">
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Execution Metrics</div>
+        <div class="small-grid">
+          <div class="metric-box"><div class="title">Terminal outcomes (1/-1)</div><div id="exec-attempts" class="num">--</div></div>
+          <div class="metric-box"><div id="exec-success-title" class="title">Deleted</div><div id="exec-successes" class="num" style="color:var(--green);">--</div></div>
+          <div class="metric-box"><div id="exec-failure-title" class="title">Errored</div><div id="exec-failures" class="num" style="color:var(--red);">--</div></div>
+          <div class="metric-box"><div id="exec-pending-title" class="title">Delete error rate</div><div id="exec-pending" class="num" style="color:var(--red);">--</div></div>
+        </div>
+        <div id="exec-note" class="backend" style="font-size:11px; padding:8px; margin-top:10px;">
+          <strong>Signal:</strong> loading...
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <h3 class="section-title">Deletion by Source (Top Storage)</h3>
-      <div class="muted">Focus on where remaining storage is concentrated</div>
+      <h3 class="section-title">Deletion by Source (Grouped)</h3>
+      <div class="muted">Grouped into R0-R5, Manual, A1 DS Model (old), Adhoc, DS Model (2026), and Others</div>
       <table class="table" style="font-size: 11px;">
-        <thead><tr><th>Source</th><th>Remaining</th><th>Deleted</th><th>Ready</th></tr></thead>
+        <thead><tr><th>Source</th><th>Remaining</th><th>Deleted</th><th>Ready-to-Delete</th></tr></thead>
         <tbody id="source-table-body"></tbody>
       </table>
       <div id="source-note" class="backend">
@@ -452,30 +559,7 @@ body {
     </div>
   </div>
 
-  <div class="card">
-    <h3 class="section-title">Operations Queue (High Signal)</h3>
-    <div class="ops-grid">
-      <div class="ops-item">
-        <div class="ops-title">P1 Queue</div>
-        <span id="ops-p1-queue">--</span><br><span class="tag overdue">Drain scheduler queue</span>
-      </div>
-      <div class="ops-item">
-        <div class="ops-title">P1 Pipeline</div>
-        <span id="ops-p1-pipeline">--</span><br><span class="tag overdue">Bulk schedule expansion</span>
-      </div>
-      <div class="ops-item">
-        <div class="ops-title">P2 Pipeline</div>
-        <span id="ops-p2-pipeline">--</span><br><span class="tag pending">Accelerate block completion</span>
-      </div>
-      <div class="ops-item">
-        <div class="ops-title">P2 Failure Signal</div>
-        <span id="ops-p2-failure">--</span><br><span class="tag pending">Classify root causes</span>
-      </div>
-    </div>
-    <div class="backend">
-      <strong>One-page readout:</strong> compare the due-date split at the top with the stage choke points and the last 7 days throughput row.
-    </div>
-  </div>
+
 
   <div id="data-note" class="backend">
     <strong>Data note:</strong> loading...
@@ -489,7 +573,8 @@ const DATA_FILES = {
   dd5: 'Results for Dashboard/DD5.csv',
   dd6: 'Results for Dashboard/DD6.csv',
   dd8: 'Results for Dashboard/DD8.csv',
-  dd9: 'Results for Dashboard/DD9.csv'
+  dd9: 'Results for Dashboard/DD9.csv',
+  dd10: 'Results for Dashboard/DD10.csv'
 };
 
 function parseCsv(text) {
@@ -537,18 +622,6 @@ function parseCsv(text) {
   return rows;
 }
 
-function csvToObjects(text) {
-  const rows = parseCsv(text);
-  const [header, ...body] = rows;
-  return body.map((row) => {
-    const item = {};
-    header.forEach((name, index) => {
-      item[name] = row[index] ?? '';
-    });
-    return item;
-  });
-}
-
 function formatCount(value) {
   return Number(value || 0).toLocaleString('en-US');
 }
@@ -588,6 +661,10 @@ function setHtml(id, html) {
   document.getElementById(id).innerHTML = html;
 }
 
+function formatCountStorage(count, storagePb) {
+  return `${formatCount(count)} | ${formatPb(storagePb)}`;
+}
+
 function buildPipelineBar(label, count, storagePb, widthPct) {
   return `
     <div class="mini-row">
@@ -607,37 +684,283 @@ async function fetchText(path) {
 
 function renderSourceTable(rows) {
   const body = document.getElementById('source-table-body');
-  body.innerHTML = rows.slice(0, 5).map((row) => `
+  const grouped = new Map();
+
+  rows
+    .filter((row) => row && row.length >= 7)
+    .filter((row) => String(row[0] || '').trim().toUpperCase() !== 'SOURCE_BUCKET')
+    .forEach((row) => {
+      const bucket = normalizeSourceBucket(row[0]);
+      const current = grouped.get(bucket) || [0, 0, 0, 0, 0, 0];
+      current[0] += parseNumber(row[1]);
+      current[1] += parseNumber(row[2]);
+      current[2] += parseNumber(row[3]);
+      current[3] += parseNumber(row[4]);
+      current[4] += parseNumber(row[5]);
+      current[5] += parseNumber(row[6]);
+      grouped.set(bucket, current);
+    });
+
+  const normalized = Array.from(grouped.entries())
+    .map(([bucket, values]) => [bucket, ...values])
+    .sort((a, b) => {
+      const deletedCountDelta = parseNumber(b[1]) - parseNumber(a[1]);
+      if (deletedCountDelta !== 0) {
+        return deletedCountDelta;
+      }
+      const deletedStorageDelta = parseNumber(b[2]) - parseNumber(a[2]);
+      if (deletedStorageDelta !== 0) {
+        return deletedStorageDelta;
+      }
+      return String(a[0]).localeCompare(String(b[0]));
+    });
+
+  body.innerHTML = normalized.map((row) => `
     <tr>
       <td><strong>${row[0]}</strong></td>
-      <td>${formatPb(row[4])}</td>
-      <td>${formatCount(row[1])} / ${formatPb(row[2])}</td>
-      <td>${formatCount(row[5])} / ${formatPb(row[6])}</td>
+      <td>${formatCount(row[3])} tenants | ${formatPb(row[4])}</td>
+      <td>${formatCount(row[1])} tenants | ${formatPb(row[2])}</td>
+      <td>${formatCount(row[5])} tenants | ${formatPb(row[6])}</td>
     </tr>`).join('');
+}
+
+function normalizeSourceBucket(raw) {
+  const text = String(raw || '').trim();
+  const upper = text.toUpperCase();
+
+  const ruleMatch = upper.match(/^R([0-5])\b/);
+  if (ruleMatch) {
+    return `R${ruleMatch[1]}`;
+  }
+  if (upper.startsWith('R0/RULES')) {
+    return 'R0';
+  }
+  if (upper.includes('MANUAL')) {
+    return 'Manual';
+  }
+  if (upper.includes('A1 DS MODEL')) {
+    return 'A1 DS Model (old)';
+  }
+  if (upper.includes('ADHOC')) {
+    return 'Adhoc Investigation';
+  }
+  if (upper.includes('DS MODEL') && upper.includes('2026')) {
+    return 'DS Model (2026)';
+  }
+
+  return 'Others';
+}
+
+function summarizeDd9(rows, remainingTenants, remainingStorage, snapshotDate) {
+  if (!rows.length) {
+    return {
+      dueNowCount: 0,
+      dueNowPb: 0,
+      futureCount: 0,
+      futurePb: 0,
+      noDateCount: remainingTenants,
+      noDatePb: remainingStorage
+    };
+  }
+
+  // Legacy format: header + single summary row
+  if (rows[0][0] === 'DUE_OR_OVERDUE') {
+    const summaryRow = rows[1] ?? [];
+    return {
+      dueNowCount: parseNumber(summaryRow[0]),
+      dueNowPb: parseNumber(summaryRow[1]),
+      futureCount: parseNumber(summaryRow[2]),
+      futurePb: parseNumber(summaryRow[3]),
+      noDateCount: parseNumber(summaryRow[4]),
+      noDatePb: parseNumber(summaryRow[5])
+    };
+  }
+
+  // Current query output: SUMMARY/WEEKLY layout
+  const summaryRow = rows.find((row) => row[0] === 'SUMMARY');
+  if (summaryRow) {
+    return {
+      dueNowCount: parseNumber(summaryRow[5]),
+      dueNowPb: parseNumber(summaryRow[6]),
+      futureCount: parseNumber(summaryRow[7]),
+      futurePb: parseNumber(summaryRow[8]),
+      noDateCount: parseNumber(summaryRow[9]),
+      noDatePb: parseNumber(summaryRow[10])
+    };
+  }
+
+  // Weekly-only fallback: compute overdue vs future from week end date.
+  let dueNowCount = 0;
+  let dueNowPb = 0;
+  let futureCount = 0;
+  let futurePb = 0;
+  let datedCount = 0;
+  let datedPb = 0;
+
+  rows.forEach((row) => {
+    if (row[0] !== 'WEEKLY') {
+      return;
+    }
+
+    const weekEnd = parseDate(row[2]);
+    const count = parseNumber(row[3]);
+    const storagePb = parseNumber(row[4]);
+
+    if (!weekEnd) {
+      return;
+    }
+
+    datedCount += count;
+    datedPb += storagePb;
+
+    if (weekEnd < snapshotDate) {
+      dueNowCount += count;
+      dueNowPb += storagePb;
+    } else {
+      futureCount += count;
+      futurePb += storagePb;
+    }
+  });
+
+  return {
+    dueNowCount,
+    dueNowPb,
+    futureCount,
+    futurePb,
+    noDateCount: Math.max(remainingTenants - datedCount, 0),
+    noDatePb: Math.max(remainingStorage - datedPb, 0)
+  };
+}
+
+function summarizeDd10BlockSplits(dd10Rows) {
+  if (!dd10Rows.length) {
+    return {
+      noDateNotOverdueCount: 0,
+      noDateNotOverduePb: 0,
+      scheduledCount: 0,
+      scheduledPb: 0,
+      overdueCount: 0,
+      overduePb: 0,
+      otherCount: 0,
+      otherPb: 0,
+      totalCount: 0,
+      totalPb: 0
+    };
+  }
+
+  const firstRow = dd10Rows[0] || [];
+  const hasHeader = firstRow.includes('CURRENT_STATUS') && firstRow.includes('IN_PLAN_FOR_DELETION');
+
+  let dataRows = dd10Rows;
+  let statusIndex = 2;
+  let inPlanIndex = 13;
+  let dueBucketIndex = 11;
+  let storageTbIndex = 6;
+
+  if (hasHeader) {
+    dataRows = dd10Rows.slice(1);
+    const indexByName = new Map(firstRow.map((name, index) => [name, index]));
+    statusIndex = indexByName.get('CURRENT_STATUS');
+    inPlanIndex = indexByName.get('IN_PLAN_FOR_DELETION');
+    dueBucketIndex = indexByName.get('DUE_BUCKET');
+    storageTbIndex = indexByName.get('STORAGE_TB');
+
+    if (statusIndex === undefined || inPlanIndex === undefined || dueBucketIndex === undefined || storageTbIndex === undefined) {
+      return {
+        noDateNotOverdueCount: 0,
+        noDateNotOverduePb: 0,
+        scheduledCount: 0,
+        scheduledPb: 0,
+        overdueCount: 0,
+        overduePb: 0,
+        otherCount: 0,
+        otherPb: 0,
+        totalCount: 0,
+        totalPb: 0
+      };
+    }
+  }
+
+  let noDateNotOverdueCount = 0;
+  let noDateNotOverdueTb = 0;
+  let scheduledCount = 0;
+  let scheduledTb = 0;
+  let overdueCount = 0;
+  let overdueTb = 0;
+  let otherCount = 0;
+  let otherTb = 0;
+
+  dataRows.forEach((row) => {
+    const status = String(row[statusIndex] || '').trim();
+    const inPlan = String(row[inPlanIndex] || '').trim();
+    const dueBucket = String(row[dueBucketIndex] || '').trim();
+    const storageTb = parseNumber(row[storageTbIndex]);
+
+    if (status !== 'BLOCK_COMPLETED') {
+      return;
+    }
+
+    if (inPlan === '1') {
+      scheduledCount += 1;
+      scheduledTb += storageTb;
+      return;
+    }
+
+    if (inPlan === '0' && dueBucket === 'DUE_OR_OVERDUE') {
+      overdueCount += 1;
+      overdueTb += storageTb;
+      return;
+    }
+
+    if (inPlan === '0' && dueBucket === 'NO_DATE_YET') {
+      noDateNotOverdueCount += 1;
+      noDateNotOverdueTb += storageTb;
+      return;
+    }
+
+    otherCount += 1;
+    otherTb += storageTb;
+  });
+
+  const totalCount = noDateNotOverdueCount + scheduledCount + overdueCount + otherCount;
+  const totalPb = (noDateNotOverdueTb + scheduledTb + overdueTb + otherTb) / 1024;
+  return {
+    noDateNotOverdueCount,
+    noDateNotOverduePb: noDateNotOverdueTb / 1024,
+    scheduledCount,
+    scheduledPb: scheduledTb / 1024,
+    overdueCount,
+    overduePb: overdueTb / 1024,
+    otherCount,
+    otherPb: otherTb / 1024,
+    totalCount,
+    totalPb
+  };
 }
 
 async function renderDashboard() {
   try {
-    const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, dd9Text] = await Promise.all([
+    const [dd1Text, dd2Text, dd4Text, dd5Text, dd6Text, dd8Text, dd9Text, dd10Text] = await Promise.all([
       fetchText(DATA_FILES.dd1),
       fetchText(DATA_FILES.dd2),
       fetchText(DATA_FILES.dd4),
       fetchText(DATA_FILES.dd5),
       fetchText(DATA_FILES.dd6),
       fetchText(DATA_FILES.dd8),
-      fetchText(DATA_FILES.dd9)
+      fetchText(DATA_FILES.dd9),
+      fetchText(DATA_FILES.dd10)
     ]);
 
-    const dd1 = parseCsv(dd1Text)[0];
+    const dd1 = parseCsv(dd1Text)[1] ?? parseCsv(dd1Text)[0];
     const dd2 = parseCsv(dd2Text);
     const dd4 = parseCsv(dd4Text);
-    const dd5 = parseCsv(dd5Text)[0];
-    const dd6 = parseCsv(dd6Text);
-    const dd8 = parseCsv(dd8Text)[0];
-    // DD9: header row then one SUMMARY data row
-    // Columns: DUE_OR_OVERDUE,DUE_OVERDUE_PB,FUTURE_DATED,FUTURE_DATED_PB,NO_DATE_YET,NO_DATE_YET_PB
-    // These are computed dynamically: BLOCK_DATE + 15/30 days per usecase type
-    const dd9 = parseCsv(dd9Text)[1]; // skip header, take first data row
+    const dd5 = parseCsv(dd5Text)[1] ?? parseCsv(dd5Text)[0];
+    const dd6Rows = parseCsv(dd6Text);
+    const dd6HasHeader = (dd6Rows[0] || [])[0] === 'PIPELINE_STAGE';
+    const dd6 = dd6HasHeader ? dd6Rows.slice(1) : dd6Rows;
+    const dd8 = parseCsv(dd8Text)[1] ?? parseCsv(dd8Text)[0];
+    const dd9Rows = parseCsv(dd9Text);
+    const dd10Rows = parseCsv(dd10Text);
 
     const snapshotDateText = document.getElementById('snapshot-note').dataset.asOf;
     const snapshotDate = new Date(`${snapshotDateText}T00:00:00Z`);
@@ -650,17 +973,19 @@ async function renderDashboard() {
     const remainingStorage = parseNumber(dd1[5]);
 
     const last7 = dd2.find((row) => row[0] === 'Last 7 days');
+    const last14 = dd2.find((row) => row[0] === 'Last 14 days');
     const totalSinceStart = dd2.find((row) => row[0] === 'Since scope start');
     const prior7Deleted = Math.max(parseNumber(totalSinceStart[1]) - parseNumber(last7[1]), 0);
     const prior7Storage = Math.max(parseNumber(totalSinceStart[2]) - parseNumber(last7[2]), 0);
 
-    // Backlog split from DD9 (dynamic block-date computation: BLOCK_DATE + 15 or 30 days)
-    const dueNowCount = parseNumber(dd9[0]);       // deletion window has passed
-    const dueNowPb = parseNumber(dd9[1]);
-    const futureCount = parseNumber(dd9[2]);        // deletion window not yet open
-    const futurePb = parseNumber(dd9[3]);
-    const noDateCount = parseNumber(dd9[4]);        // not yet blocked — no date computable
-    const noDatePb = parseNumber(dd9[5]);
+    const {
+      dueNowCount,
+      dueNowPb,
+      futureCount,
+      futurePb,
+      noDateCount,
+      noDatePb
+    } = summarizeDd9(dd9Rows, remainingTenants, remainingStorage, snapshotDate);
 
     const shownPipelineCount = dd6.reduce((sum, row) => sum + parseNumber(row[1]), 0);
     const shownPipelineStorage = dd6.reduce((sum, row) => sum + parseNumber(row[2]), 0);
@@ -668,7 +993,7 @@ async function renderDashboard() {
     const otherPipelineStorage = Math.max(remainingStorage - shownPipelineStorage, 0);
     const maxPipelineCount = Math.max(...dd6.map((row) => parseNumber(row[1])), otherPipelineCount, 1);
 
-    setHtml('snapshot-note', `Snapshot pulled on <strong>${snapshotDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</strong>. WoW compares the current 7-day delete window vs the prior 7-day window.`);
+    setHtml('snapshot-note', `Report Date: <strong>${snapshotDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</strong>`);
 
     setText('in-scope-storage', formatPb(inScopeStorage));
     setText('in-scope-tenants', formatCount(inScopeTenants));
@@ -703,41 +1028,62 @@ async function renderDashboard() {
     setHtml('velocity-note', '<strong>Nuance:</strong> this snapshot shows low or near-zero reclaimed PB while deletion counts are increasing. That is expected when the current deleted set is mostly low-storage tenants.');
 
     const pipelineLabels = {
-      DELETE_SCHEDULED_NOT_DONE: 'Delete scheduled, not done',
-      BLOCKED_NOT_SCHEDULED: 'Blocked, not scheduled',
-      READONLY_COMPLETE_AWAITING_BLOCK: 'ReadOnly complete - awaiting Block',
-      READONLY_IN_PROGRESS: 'ReadOnly in progress'
+      DELETE_SCHEDULED_NOT_DONE: 'Ready to execute',
+      BLOCKED_NOT_SCHEDULED: 'Blocked — awaiting scheduling',
+      READONLY_COMPLETE_AWAITING_BLOCK: 'In remediation',
+      READONLY_IN_PROGRESS: 'In remediation'
     };
-    const pipelineRowsHtml = dd6.map((row) => buildPipelineBar(
-      pipelineLabels[row[0]] || row[0],
-      parseNumber(row[1]),
-      parseNumber(row[2]),
-      (parseNumber(row[1]) / maxPipelineCount) * 100
-    )).join('') + buildPipelineBar('Not yet schedulable (no block date)', otherPipelineCount, otherPipelineStorage, (otherPipelineCount / maxPipelineCount) * 100);
+    // Consolidate pipeline stages: group readonly stages together
+    const readonlyTotal = parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[1] ?? 0) + 
+               parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[1] ?? 0);
+    const readonlyStorageTotal = parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[2] ?? 0) + 
+                  parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[2] ?? 0);
+    const scheduledRow = dd6.find(r => r[0] === 'DELETE_SCHEDULED_NOT_DONE');
+    const blockedRow = dd6.find(r => r[0] === 'BLOCKED_NOT_SCHEDULED');
+    const consolidatedPipeline = [
+      ['Ready to execute', parseNumber(scheduledRow?.[1] ?? 0), parseNumber(scheduledRow?.[2] ?? 0)],
+      ['Blocked — awaiting scheduling', parseNumber(blockedRow?.[1] ?? 0), parseNumber(blockedRow?.[2] ?? 0)],
+      ['In remediation', readonlyTotal, readonlyStorageTotal],
+      ['Awaiting block date', otherPipelineCount, otherPipelineStorage]
+    ];
+    const maxConsolidatedCount = Math.max(...consolidatedPipeline.map(p => parseNumber(p[1])), 1);
+    const pipelineRowsHtml = consolidatedPipeline
+      .map(([label, count, storage]) => buildPipelineBar(label, count, storage, (parseNumber(count) / maxConsolidatedCount) * 100))
+      .join('');
     setHtml('pipeline-bars', pipelineRowsHtml);
-    setHtml('pipeline-note', `<strong>Main bottleneck:</strong> <strong>blocked but not scheduled</strong> is still the primary choke point (${formatPb(dd6.find((row) => row[0] === 'BLOCKED_NOT_SCHEDULED')[2])}). The extra ${formatCount(otherPipelineCount)} tenants sit outside the four primary operating buckets.`);
+    setHtml('pipeline-note', `<strong>Main bottleneck:</strong> <strong>blocked — awaiting scheduling</strong> (${formatCount(blockedRow[1])} tenants, ${formatPb(blockedRow[2])} storage) is the biggest constraint. Second priority: <strong>in remediation</strong> (${formatCount(readonlyTotal)} tenants) needing block completion before scheduling.`);
+
+    // Remediation pipeline snapshot (same semantics as flow preview)
+    const blockSplits = summarizeDd10BlockSplits(dd10Rows);
+
+    setText('flow-readonly-main', formatCountStorage(readonlyTotal, parseNumber(readonlyStorageTotal)));
+    setText('flow-readonly-planned', `${formatCount(parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[1] ?? 0))} | ${formatPb(parseNumber(dd6.find(r => r[0] === 'READONLY_COMPLETE_AWAITING_BLOCK')?.[2] ?? 0))}`);
+    setText('flow-readonly-progress', `${formatCount(parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[1] ?? 0))} | ${formatPb(parseNumber(dd6.find(r => r[0] === 'READONLY_IN_PROGRESS')?.[2] ?? 0))}`);
+
+    setText('flow-block-main', formatCountStorage(blockSplits.totalCount, blockSplits.totalPb));
+    setText('flow-block-nosched', formatCountStorage(blockSplits.noDateNotOverdueCount, blockSplits.noDateNotOverduePb));
+    setText('flow-block-sched', formatCountStorage(blockSplits.scheduledCount, blockSplits.scheduledPb));
+    setText('flow-block-overdue', formatCountStorage(blockSplits.overdueCount, blockSplits.overduePb));
+    setText('flow-block-other', formatCountStorage(blockSplits.otherCount, blockSplits.otherPb));
+
+    setText('flow-delete-main', formatCountStorage(parseNumber(dd1[2]), parseNumber(dd1[3])));
+    setText('flow-delete-last14', `${formatCount(parseNumber(dd5[1]))} | ${formatPb(parseNumber(last14?.[2] ?? 0))}`);
+    setText('flow-delete-fail14', `${formatCount(parseNumber(dd5[2]))} | ${formatPb(0)}`);
+    setText('flow-inscope-main', formatCountStorage(parseNumber(dd1[0]), parseNumber(dd1[1])));
 
     setText('exec-attempts', formatCount(dd5[0]));
     setText('exec-successes', formatCount(dd5[1]));
     setText('exec-failures', formatCount(dd5[2]));
-    setText('exec-pending', formatCount(dd5[3]));
-    setText('exec-success-title', `Succeeded (${parseNumber(dd5[4]).toFixed(0)}%)`);
-    setText('exec-failure-title', `Failed (${parseNumber(dd5[5]).toFixed(0)}%)`);
-    setText('exec-pending-title', `Pending (${parseNumber(dd5[6]).toFixed(0)}%)`);
-    setHtml('exec-note', '<strong>Signal:</strong> execution lag in the scheduled queue is the issue, not hard failures.');
+    setText('exec-pending', `${parseNumber(dd5[5]).toFixed(2)}%`);
+    setText('exec-success-title', `Deleted (${parseNumber(dd5[4]).toFixed(2)}%)`);
+    setText('exec-failure-title', `Errored (${parseNumber(dd5[5]).toFixed(2)}%)`);
+    setText('exec-pending-title', 'Delete error rate');
+    setHtml('exec-note', '<strong>Signal:</strong> Execution metrics reflect terminal delete outcomes for the active run window.');
 
     renderSourceTable(dd4);
-    setHtml('source-note', 'Storage reclaim will remain low until deletes move from the current R0-heavy low-storage set into the higher-storage R4, R2, and R3 cohorts.');
+    setHtml('source-note', 'Tenant deletion velocity accelerates when deletions shift from low-storage R0 tenants to higher-storage cohorts (R4, R2, R3). Track both tenant count and storage reclaim to see progress on both axes.');
 
-    const blockedRow = dd6.find((row) => row[0] === 'BLOCKED_NOT_SCHEDULED');
-    const readonlyRow = dd6.find((row) => row[0] === 'READONLY_COMPLETE_AWAITING_BLOCK');
-    const scheduledRow = dd6.find((row) => row[0] === 'DELETE_SCHEDULED_NOT_DONE');
-    setText('ops-p1-queue', `${formatCount(dd5[3])} pending scheduled attempts (${formatPb(scheduledRow[2])})`);
-    setText('ops-p1-pipeline', `${formatCount(blockedRow[1])} blocked unscheduled (${formatPb(blockedRow[2])})`);
-    setText('ops-p2-pipeline', `${formatCount(readonlyRow[1])} ReadOnly complete awaiting Block (${formatPb(readonlyRow[2])})`);
-    setText('ops-p2-failure', `${dd8[0]}: ${formatCount(dd8[1])} events`);
-
-    setHtml('data-note', '<strong>Data note:</strong> Scope, velocity, source, execution, and stage metrics come from DD1, DD2, DD4, DD5, DD6, DD8 CSVs. The backlog breakdown uses <strong>DD9.csv</strong> — a pre-aggregated summary where the deletion date is computed dynamically as <strong>BLOCK_DATE + 15 days</strong> (for ABUSE-READONLY-BLOCK-DELETE_15DAYS) or <strong>+ 30 days</strong> (all others). Tenants with no block date yet are counted as <em>Not yet schedulable</em>. Re-run the DD9 query after each data refresh to update this file.');
+    setHtml('data-note', '<strong>Data note:</strong> Scope, velocity, source, execution, and stage metrics come from the latest CSV snapshot set. Backlog breakdown supports both legacy and current summary layouts. Block-stage splits are fully derived from row-level block status fields (completed block state, plan flag, and due bucket).');
   } catch (error) {
     setHtml('snapshot-note', `<strong>Load error:</strong> ${error.message}. Serve this folder over HTTP so the dashboard can fetch its CSV snapshot files.`);
   }
