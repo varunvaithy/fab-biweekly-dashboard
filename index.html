@@ -1027,14 +1027,14 @@ function renderAlerts() {
 
   // 7. Period-over-Period Comparison — flag significant changes between runs
   if (DATA.PREV && DATA.C2b) {
-    const currentCumPB = DATA.C2b.reduce((max, d) => d.cumulative_pb > max ? d.cumulative_pb : max, 0);
-    const prevCumPB = DATA.PREV.cumulative_pb;
-    const delta = currentCumPB - prevCumPB;
+    const currentCumTB = DATA.C2b.reduce((max, d) => { const v = d.cumulative_tb || (d.cumulative_pb||0)*1024; return v > max ? v : max; }, 0);
+    const prevCumTB = DATA.PREV.cumulative_tb || (DATA.PREV.cumulative_pb||0)*1024;
+    const deltaTB = currentCumTB - prevCumTB; const delta = deltaTB / 1024; const currentCumPB = currentCumTB / 1024; const prevCumPB = prevCumTB / 1024;
     const currentPeriodAdd = DATA.C2b.find(d => d.period_num === 0);
     
     // Detect if cumulative went DOWN (retroactive FP reclassification)
     if (delta < 0) {
-      const grossNew = currentPeriodAdd ? currentPeriodAdd.storage_pb : 0;
+      const grossNew = currentPeriodAdd ? (currentPeriodAdd.storage_tb || (currentPeriodAdd.storage_pb||0)*1024) / 1024 : 0;
       const retroRemoved = Math.abs(delta) + grossNew; // how much was actually removed retroactively
       const body = [
         '<strong>Cumulative storage remediated dropped</strong> from ' + prevCumPB.toFixed(1) + ' PB → ' + currentCumPB.toFixed(1) + ' PB (Δ ' + delta.toFixed(2) + ' PB).',
@@ -1047,7 +1047,7 @@ function renderAlerts() {
     } else if (delta > 0 && currentPeriodAdd) {
       // Normal growth — show what was added
       const body = 'Grew from ' + prevCumPB.toFixed(1) + ' → ' + currentCumPB.toFixed(1) + ' PB (+' + delta.toFixed(2) + ' PB). ' +
-        'This period: ' + fmt(currentPeriodAdd.tenants) + ' tenants, ' + currentPeriodAdd.storage_pb.toFixed(2) + ' PB remediated.';
+        'This period: ' + fmt(currentPeriodAdd.tenants) + ' tenants, ' + ((currentPeriodAdd.storage_tb || (currentPeriodAdd.storage_pb||0)*1024) / 1024).toFixed(2) + ' PB remediated.';
       cards.push({ type: 'success', icon: '📈', title: 'Cumulative Remediation +' + delta.toFixed(2) + ' PB vs previous report', body: body });
     }
 
