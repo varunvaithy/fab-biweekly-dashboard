@@ -577,7 +577,7 @@ const DATA = {
   ],
 
   PREV: {
-    tenants: 45, storage_pb: 1.482, fp_rate: 0,
+    tenants: 45, storage_pb: 1.482, fp_rate: 0, cumulative_pb: 94.069, fp_total: 3127,
     pipeline: { identified: 0, readonly: 0, blocked: 0 },
     inv: []
   },
@@ -1021,6 +1021,47 @@ function renderAlerts() {
     if (blocked > 0) {
       const blockStorage = DATA.G5.filter(d => d.status.includes('Block Completed')).reduce((s,d) => s + d.storage_tb, 0);
       cards.push({ type: 'success', icon: '\uD83D\uDDD1\uFE0F', title: '\uD83D\uDEAE Deletion Plan: ' + fmt(blocked) + ' tenants ready (Phase 1 \u2014 May 2026)', body: 'Block Completed + 30-day dwell + zero activity + no appeal/CELA hold. Estimated ' + fmtStorage(blockStorage) + ' reclamation. Target: reduce backlog from ~15K to <1K.' });
+    }
+  }
+
+
+  // 7. Period-over-Period Comparison — flag significant changes between runs
+  if (DATA.PREV && DATA.C2b) {
+    const currentCumPB = DATA.C2b.reduce((max, d) => d.cumulative_pb > max ? d.cumulative_pb : max, 0);
+    const prevCumPB = DATA.PREV.cumulative_pb;
+    const delta = currentCumPB - prevCumPB;
+    const currentPeriodAdd = DATA.C2b.find(d => d.period_num === 0);
+    
+    // Detect if cumulative went DOWN (retroactive FP reclassification)
+    if (delta < 0) {
+      const grossNew = currentPeriodAdd ? currentPeriodAdd.storage_pb : 0;
+      const retroRemoved = Math.abs(delta) + grossNew; // how much was actually removed retroactively
+      const body = [
+        '<strong>Cumulative storage remediated dropped</strong> from ' + prevCumPB.toFixed(1) + ' PB → ' + currentCumPB.toFixed(1) + ' PB (Δ ' + delta.toFixed(2) + ' PB).',
+        'This period added +' + grossNew.toFixed(2) + ' PB of new remediations.',
+        '<strong>~' + retroRemoved.toFixed(2) + ' PB was retroactively removed</strong> from prior periods due to FP reclassification.',
+        'Likely cause: tenants overturned to False Positive between query runs (status changed retroactively).',
+        'This is expected behavior — the C2b metric reflects <em>current truth</em>, not historical snapshots.'
+      ].join('<br>');
+      cards.push({ type: 'warning', icon: '📉', title: 'Cumulative Remediation Δ: ' + delta.toFixed(2) + ' PB (retroactive FP adjustments)', body: body });
+    } else if (delta > 0 && currentPeriodAdd) {
+      // Normal growth — show what was added
+      const body = 'Grew from ' + prevCumPB.toFixed(1) + ' → ' + currentCumPB.toFixed(1) + ' PB (+' + delta.toFixed(2) + ' PB). ' +
+        'This period: ' + fmt(currentPeriodAdd.tenants) + ' tenants, ' + currentPeriodAdd.storage_pb.toFixed(2) + ' PB remediated.';
+      cards.push({ type: 'success', icon: '📈', title: 'Cumulative Remediation +' + delta.toFixed(2) + ' PB vs previous report', body: body });
+    }
+
+    // Compare FP rates
+    if (DATA.A3c && DATA.PREV.fp_total) {
+      const currentFP = DATA.A3c.reduce((s, r) => s + (r.fp || 0), 0);
+      const fpDelta = currentFP - DATA.PREV.fp_total;
+      if (Math.abs(fpDelta) > 50) {
+        const dir = fpDelta > 0 ? 'increased' : 'decreased';
+        cards.push({ type: fpDelta > 0 ? 'warning' : 'success', icon: fpDelta > 0 ? '⚠️' : '✅', 
+          title: 'FP count ' + dir + ': ' + fmt(DATA.PREV.fp_total) + ' → ' + fmt(currentFP) + ' (Δ ' + (fpDelta > 0 ? '+' : '') + fmt(fpDelta) + ')',
+          body: 'Change driven by retroactive reclassification. ' + fmt(Math.abs(fpDelta)) + ' tenants changed FP status between reporting periods.'
+        });
+      }
     }
   }
 
