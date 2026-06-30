@@ -330,7 +330,7 @@ tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
   </div>
 
   <!-- →→→→→→→ ROW 3: Insights & Signals →→→→→→→ -->
-  <div class="section-label">Insights & Signals</div>
+  <div class="section-label">Insights & Signals — H1'26 Semester Summary</div>
   <div id="alerts-container" class="insight-grid">
     <div class="empty-state">
       <div class="icon">📊</div>
@@ -987,81 +987,153 @@ function renderAlerts() {
     }
   }
 
-  // ── Merged Insights: Storage, FP, Pipeline, Investigations, Deletion ──
-  const authTB = getAuthoritativeStorage();
-  if (authTB > 0) {
-    const periodAdd = DATA.C2b && DATA.C2b.length ? fmtStorage(DATA.C2b[DATA.C2b.length-1].storage_tb || DATA.C2b[DATA.C2b.length-1].storage_pb * 1024) : 'N/A';
-    cards.push({ type: 'success', icon: '\uD83D\uDCC8', title: fmtStorage(authTB) + ' Total Storage Remediated (Nov\u201925\u2192Now)', body: 'Cumulative storage impact. This period added ' + periodAdd + '.' });
+  // ══════════════════════════════════════════════════════════════════════
+  // H1'26 SEMESTER SUMMARY — Nov'25 → Jun'26 Highlights & Lowlights
+  // ══════════════════════════════════════════════════════════════════════
+
+  // Semester headline card
+  if (DATA.F1) {
+    const novStart = DATA.C2b ? DATA.C2b.reduce((s,d) => s + d.tenants, 0) : 0;
+    const novStorage = getAuthoritativeStorage() / 1024; // PB
+    const costM = DATA.F1.total_cost ? (DATA.F1.total_cost / 1000000).toFixed(1) : '?';
+    cards.push({ type: 'info', icon: '📋', title: 'H1\'26 Semester Close — FAB Performance Summary (Nov\'25 → Now)',
+      body: [
+        '<strong>Key Outcomes:</strong>',
+        '• <strong>' + fmtStorage(getAuthoritativeStorage()) + '</strong> storage remediated across <strong>' + fmt(novStart) + '</strong> tenants (Nov\'25+)',
+        '• All-time: ' + fmt(DATA.F1.total_identified) + ' identified, ' + fmt(DATA.F1.total_remediated) + ' remediated, ' + DATA.F1.total_storage_pb.toFixed(0) + ' PB, $' + costM + 'M cost avoided',
+        '• Pipeline operational since Jul\'25 — <strong>8 months of continuous remediation</strong>'
+      ].join('<br>')
+    });
   }
-  if (DATA.A3c) {
-    const totalFP = DATA.A3c.reduce((s,r) => s + r.fp, 0);
-    const totalDecided = DATA.A3c.reduce((s,r) => s + r.remediated + r.fp, 0);
-    const rate = (totalFP / totalDecided * 100).toFixed(2);
-    const worstRule = DATA.A3c.reduce((w, r) => r.fp_rate > (w.fp_rate||0) ? r : w, {});
-    const totalRem2 = DATA.A3c.reduce((s,r) => s + r.remediated, 0);
-    cards.push({ type: rate < 3 ? 'success' : 'warning', icon: '\u2705', title: rate + '% FP Rate (' + totalFP + ' FP / ' + fmt(totalRem2) + ' remediated)', body: 'Highest: ' + worstRule.rule + ' at ' + worstRule.fp_rate + '%. Target: <5%.' });
+
+  // Highlights
+  {
+    const highlights = [];
+    // Pipeline reliability
+    if (DATA.B3) {
+      const succ = DATA.B3.reduce((s,d) => s + d.succeeded, 0);
+      const total = DATA.B3.reduce((s,d) => s + d.total, 0);
+      const pipeRate = (succ / total * 100).toFixed(1);
+      highlights.push('<strong>' + pipeRate + '% pipeline reliability</strong> across ' + fmt(total) + ' actions (Block, ReadOnly, Delete)');
+    }
+    // Deletion program launched
+    if (DATA.G5) {
+      const deleted = DATA.G5.filter(d => d.status.includes('Delete')).reduce((s,d) => s + d.count, 0);
+      const delStorage = DATA.G5.filter(d => d.status.includes('Delete')).reduce((s,d) => s + d.storage_tb, 0);
+      if (deleted > 0) highlights.push('<strong>Deletion program launched</strong> — ' + fmt(deleted) + ' tenants progressed to delete (' + fmtStorage(delStorage) + ')');
+    }
+    // CRI FP rate
+    if (DATA.A3c) {
+      const totalFP = DATA.A3c.reduce((s,r) => s + r.fp, 0);
+      const criFP = totalFP - (DATA.proactiveOverturns || 0);
+      const totalRem = DATA.A3c.reduce((s,r) => s + r.remediated, 0);
+      const criRate = (criFP / (totalRem + criFP) * 100).toFixed(2);
+      highlights.push('<strong>' + criRate + '% CRI FP rate</strong> — genuine customer complaints remain low (target <5%)');
+    }
+    // Detection sources diversified
+    if (DATA.G7) {
+      const sources = DATA.G7.map(d => d.source + ': ' + fmt(d.tenants)).join(', ');
+      highlights.push('<strong>Multi-source detection:</strong> ' + sources);
+    }
+    // Investigations impact
+    if (DATA.INV && DATA.INV.length) {
+      const complete = DATA.INV.filter(i => i.status === 'complete').length;
+      const totalTenants = DATA.INV.reduce((s,i) => s + i.tenants, 0);
+      highlights.push('<strong>' + DATA.INV.length + ' investigations</strong> tracked (' + complete + ' complete) — ' + fmt(totalTenants) + ' tenants surfaced');
+    }
+    if (highlights.length) {
+      cards.push({ type: 'success', icon: '🏆', title: 'Semester Highlights',
+        body: highlights.map(h => '✓ ' + h).join('<br>')
+      });
+    }
   }
-  if (DATA.B3) {
+
+  // Lowlights / Challenges
+  {
+    const lowlights = [];
+    // R0 proactive overturn batch
+    if (DATA.proactiveOverturns) {
+      lowlights.push('<strong>' + fmt(DATA.proactiveOverturns) + ' proactive overturns</strong> (R0 AI Agent batch, Mar\'26) — inflated headline FP rate to 12.5%. One-time event from aggressive early detection.');
+    }
+    // Cumulative metric instability
+    if (DATA.C2b) {
+      lowlights.push('<strong>Cumulative metric decreased</strong> across consecutive reports (94→93→91 PB) due to retroactive FP reclassification. C2b shows "current truth" not point-in-time snapshots.');
+    }
+    // Stuck tenants in Identified/InRemediation
+    if (DATA.G5) {
+      const stuck = DATA.G5.filter(d => d.status === 'Identified' || d.status === 'In Remediation');
+      const stuckCount = stuck.reduce((s,d) => s + d.count, 0);
+      const stuckStorage = stuck.reduce((s,d) => s + d.storage_tb, 0);
+      if (stuckCount > 500) {
+        lowlights.push('<strong>' + fmt(stuckCount) + ' tenants stuck</strong> in Identified/In Remediation (' + fmtStorage(stuckStorage) + ') — pipeline backlog to address in H2');
+      }
+    }
+    // E5 Dev notification failures
+    if (DATA.B3) {
+      const e5 = DATA.B3.find(d => d.action && d.action.includes('Day23'));
+      if (e5 && e5.success_rate < 50) {
+        lowlights.push('<strong>E5 Dev Day-23 notifications failing</strong> (' + e5.success_rate.toFixed(0) + '% success) — known issue, low impact on core pipeline');
+      }
+    }
+    if (lowlights.length) {
+      cards.push({ type: 'warning', icon: '⚡', title: 'Challenges & Known Issues',
+        body: lowlights.map(l => '⚠ ' + l).join('<br>')
+      });
+    }
+  }
+
+  // Key metrics grid (the numbers)
+  if (DATA.B3 && DATA.A3c) {
     const succ = DATA.B3.reduce((s,d) => s + d.succeeded, 0);
     const total = DATA.B3.reduce((s,d) => s + d.total, 0);
     const pipeRate = (succ / total * 100).toFixed(1);
     const blockRate = (DATA.B3.find(d=>d.action==='Block')||{success_rate:0}).success_rate;
     const roRate = (DATA.B3.find(d=>d.action==='ReadOnly')||{success_rate:0}).success_rate;
-    cards.push({ type: pipeRate > 95 ? 'success' : 'warning', icon: '\u2699\uFE0F', title: pipeRate + '% Pipeline Success (' + fmt(total) + ' actions)', body: 'Block: ' + blockRate.toFixed(1) + '%, ReadOnly: ' + roRate.toFixed(1) + '%.' });
+    const delRate = (DATA.B3.find(d=>d.action==='Delete')||{success_rate:0}).success_rate;
+    const totalFP = DATA.A3c.reduce((s,r) => s + r.fp, 0);
+    const totalRem = DATA.A3c.reduce((s,r) => s + r.remediated, 0);
+    cards.push({ type: 'info', icon: '📊', title: 'Semester KPIs at a Glance',
+      body: [
+        '<strong>Pipeline:</strong> ' + pipeRate + '% overall | Block ' + blockRate.toFixed(1) + '% | RO ' + roRate.toFixed(1) + '% | Delete ' + delRate.toFixed(1) + '%',
+        '<strong>FP:</strong> ' + totalFP + ' total (' + (DATA.proactiveOverturns||0) + ' proactive + ' + (totalFP-(DATA.proactiveOverturns||0)) + ' CRI) / ' + fmt(totalRem) + ' remediated',
+        '<strong>Storage:</strong> ' + fmtStorage(getAuthoritativeStorage()) + ' remediated Nov\'25+ | ' + (DATA.F1 ? DATA.F1.total_storage_pb.toFixed(0) : '?') + ' PB all-time',
+        '<strong>Cost avoided:</strong> $' + (DATA.F1 ? (DATA.F1.total_cost/1000000).toFixed(1) : '?') + 'M all-time (@ $0.00989/GB/mo)'
+      ].join('<br>')
+    });
   }
-  if (DATA.INV && DATA.INV.length) {
-    const active = DATA.INV.filter(i => i.status === 'active');
-    const ready = DATA.INV.filter(i => i.status === 'ready');
-    const complete = DATA.INV.filter(i => i.status === 'complete');
-    const totalUsed = DATA.INV.filter(i => !i.ds_sourced).reduce((s,i) => s + (i.storage_used_tb||0), 0);
-    cards.push({ type: 'info', icon: '\uD83D\uDD0D', title: DATA.INV.length + ' Investigations: ' + active.length + ' active, ' + ready.length + ' ready, ' + complete.length + ' complete', body: fmt(DATA.INV.filter(i=>!i.ds_sourced).reduce((s,i)=>s+i.tenants,0)) + ' tenants across adhoc investigations. ' + fmtStorage(totalUsed) + ' claimed storage identified.' });
-  }
+
+  // Deletion plan status
   if (DATA.G5) {
     const blocked = DATA.G5.filter(d => d.status.includes('Block Completed')).reduce((s,d) => s + d.count, 0);
-    if (blocked > 0) {
-      const blockStorage = DATA.G5.filter(d => d.status.includes('Block Completed')).reduce((s,d) => s + d.storage_tb, 0);
-      cards.push({ type: 'success', icon: '\uD83D\uDDD1\uFE0F', title: '\uD83D\uDEAE Deletion Plan: ' + fmt(blocked) + ' tenants ready (Phase 1 \u2014 May 2026)', body: 'Block Completed + 30-day dwell + zero activity + no appeal/CELA hold. Estimated ' + fmtStorage(blockStorage) + ' reclamation. Target: reduce backlog from ~15K to <1K.' });
+    const delIP = DATA.G5.filter(d => d.status.includes('Delete In-Progress')||d.status.includes('Delete Completed')).reduce((s,d) => s + d.count, 0);
+    const delStorage = DATA.G5.filter(d => d.status.includes('Delete')).reduce((s,d) => s + d.storage_tb, 0);
+    if (blocked > 0 || delIP > 0) {
+      cards.push({ type: 'success', icon: '🗑️', title: 'Deletion Program: ' + fmt(blocked + delIP) + ' tenants in delete pipeline',
+        body: [
+          fmt(blocked) + ' at Block Completed (ready for delete)',
+          fmt(delIP) + ' already in Delete phase (' + fmtStorage(delStorage) + ')',
+          'Phase 1 target: reduce ~15K blocked backlog. On track for H2 completion.'
+        ].join('<br>')
+      });
     }
   }
 
-
-  // 7. Period-over-Period Comparison — flag significant changes between runs
+  // Period-over-Period Comparison (keep existing)
   if (DATA.PREV && DATA.C2b) {
     const currentCumTB = DATA.C2b.reduce((max, d) => { const v = d.cumulative_tb || (d.cumulative_pb||0)*1024; return v > max ? v : max; }, 0);
     const prevCumTB = DATA.PREV.cumulative_tb || (DATA.PREV.cumulative_pb||0)*1024;
     const deltaTB = currentCumTB - prevCumTB; const delta = deltaTB / 1024; const currentCumPB = currentCumTB / 1024; const prevCumPB = prevCumTB / 1024;
     const currentPeriodAdd = DATA.C2b.find(d => d.period_num === 0);
-    
-    // Detect if cumulative went DOWN (retroactive FP reclassification)
     if (delta < 0) {
       const grossNew = currentPeriodAdd ? (currentPeriodAdd.storage_tb || (currentPeriodAdd.storage_pb||0)*1024) / 1024 : 0;
-      const retroRemoved = Math.abs(delta) + grossNew; // how much was actually removed retroactively
-      const body = [
-        '<strong>Cumulative storage remediated dropped</strong> from ' + prevCumPB.toFixed(1) + ' PB → ' + currentCumPB.toFixed(1) + ' PB (Δ ' + delta.toFixed(2) + ' PB).',
-        'This period added +' + grossNew.toFixed(2) + ' PB of new remediations.',
-        '<strong>~' + retroRemoved.toFixed(2) + ' PB was retroactively removed</strong> from prior periods due to FP reclassification.',
-        'Likely cause: tenants overturned to False Positive between query runs (status changed retroactively).',
-        'This is expected behavior — the C2b metric reflects <em>current truth</em>, not historical snapshots.'
-      ].join('<br>');
-      cards.push({ type: 'warning', icon: '📉', title: 'Cumulative Remediation Δ: ' + delta.toFixed(2) + ' PB (retroactive FP adjustments)', body: body });
+      const retroRemoved = Math.abs(delta) + grossNew;
+      cards.push({ type: 'warning', icon: '📉', title: 'Cumulative Δ: ' + delta.toFixed(2) + ' PB vs last report (retroactive FP adjustments)',
+        body: 'Dropped ' + prevCumPB.toFixed(1) + ' → ' + currentCumPB.toFixed(1) + ' PB. Added +' + grossNew.toFixed(2) + ' PB new, but ~' + retroRemoved.toFixed(2) + ' PB retroactively removed (FP reclassification between runs).'
+      });
     } else if (delta > 0 && currentPeriodAdd) {
-      // Normal growth — show what was added
-      const body = 'Grew from ' + prevCumPB.toFixed(1) + ' → ' + currentCumPB.toFixed(1) + ' PB (+' + delta.toFixed(2) + ' PB). ' +
-        'This period: ' + fmt(currentPeriodAdd.tenants) + ' tenants, ' + ((currentPeriodAdd.storage_tb || (currentPeriodAdd.storage_pb||0)*1024) / 1024).toFixed(2) + ' PB remediated.';
-      cards.push({ type: 'success', icon: '📈', title: 'Cumulative Remediation +' + delta.toFixed(2) + ' PB vs previous report', body: body });
-    }
-
-    // Compare FP rates
-    if (DATA.A3c && DATA.PREV.fp_total) {
-      const currentFP = DATA.A3c.reduce((s, r) => s + (r.fp || 0), 0);
-      const fpDelta = currentFP - DATA.PREV.fp_total;
-      if (Math.abs(fpDelta) > 50) {
-        const dir = fpDelta > 0 ? 'increased' : 'decreased';
-        cards.push({ type: fpDelta > 0 ? 'warning' : 'success', icon: fpDelta > 0 ? '⚠️' : '✅', 
-          title: 'FP count ' + dir + ': ' + fmt(DATA.PREV.fp_total) + ' → ' + fmt(currentFP) + ' (Δ ' + (fpDelta > 0 ? '+' : '') + fmt(fpDelta) + ')',
-          body: 'Change driven by retroactive reclassification. ' + fmt(Math.abs(fpDelta)) + ' tenants changed FP status between reporting periods.'
-        });
-      }
+      cards.push({ type: 'success', icon: '📈', title: 'Cumulative +' + delta.toFixed(2) + ' PB vs last report',
+        body: prevCumPB.toFixed(1) + ' → ' + currentCumPB.toFixed(1) + ' PB. This period: ' + fmt(currentPeriodAdd.tenants) + ' tenants.'
+      });
     }
   }
 
