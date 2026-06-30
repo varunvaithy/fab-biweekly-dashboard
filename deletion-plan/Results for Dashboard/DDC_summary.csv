@@ -1,5 +1,4 @@
-﻿NEWLY_DELETED,829,68906.29,0.0657,Tenants whose DELETE action completed in this window. Backlog shrinks by this count.
-DELETE_SCHEDULED,70,1,0.0000,Tenants that entered the delete queue for the first time. Execution backlog grows by this count.
-BLOCK_COMPLETED,44,448231.23,0.4275,Tenants that completed the Block step. Now schedulable; delete window opened.
-READONLY_COMPLETED,255,1343913.9,1.2817,Tenants that completed ReadOnly. Now awaiting Block before they can be scheduled.
-NEW_IN_SCOPE,255,523513.87,0.4993,Net-new tenants identified as fraud candidates since last run. New deletion candidates.
+﻿NEWLY_DELETED,15,8591,0.0082,Tenants whose DELETE action completed in this window. Backlog shrinks by this count.
+BLOCK_COMPLETED,16,294863.6,0.2812,Tenants that completed the Block step. Now schedulable; delete window opened.
+READONLY_COMPLETED,23,905749.43,0.8638,Tenants that completed ReadOnly. Now awaiting Block before they can be scheduled.
+NEW_IN_SCOPE,24,914572.43,0.8722,Net-new tenants identified as fraud candidates since last run. New deletion candidates.

@@ -1,4 +1,4 @@
-﻿DELETE_SCHEDULED_NOT_DONE,13610,15.05,Await execution / retry,Immediate feeder
-BLOCKED_NOT_SCHEDULED,900,8.69,Can enter delete queue next,Ready after scheduling
-READONLY_COMPLETE_AWAITING_BLOCK,314,2.04,Needs Block before delete,Main feeder
-READONLY_IN_PROGRESS,254,0.13,Needs ReadOnly completion,Dependent on remediation
+﻿DELETE_SCHEDULED_NOT_DONE,13875,12.70,Await execution / retry,Immediate feeder
+BLOCKED_NOT_SCHEDULED,173,4.89,Can enter delete queue next,Ready after scheduling
+READONLY_COMPLETE_AWAITING_BLOCK,1013,2.39,Needs Block before delete,Main feeder
+READONLY_IN_PROGRESS,218,0.13,Needs ReadOnly completion,Dependent on remediation
